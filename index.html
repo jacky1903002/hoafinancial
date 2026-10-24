@@ -3,1119 +3,911 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>中華新幹線大廈管理委員會 - 社區財務管理系統</title>
+    <title>中華新幹線大廈社區財務管理系統</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            600: '#0284c7',
-                            700: '#0369a1',
-                            800: '#075985',
-                            900: '#0c4a6e',
-                            accent: '#0284c7'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- Font Awesome Icons -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- SheetJS for Excel Import/Export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- SheetJS (xlsx) for Excel Export/Import -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         body {
-            background-color: #f0f9ff;
-            color: #0f172a;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #e0f2fe 100%);
+            min-height: 100vh;
         }
-        /* Custom scrollbar */
+        /* Glassmorphism Elements */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(186, 230, 253, 0.6);
+            box-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.08), 0 8px 10px -6px rgba(14, 165, 233, 0.05);
+        }
+        /* Vibrant Scrollbar */
         ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 8px;
+            height: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #e0f2fe;
+            background: #f0f9ff;
         }
         ::-webkit-scrollbar-thumb {
             background: #38bdf8;
             border-radius: 4px;
         }
-        /* Table Input Styling */
-        .table-input {
-            width: 100%;
-            background: transparent;
-            padding: 4px 6px;
-            border: 1px solid transparent;
-            border-radius: 4px;
-            transition: all 0.2s;
-            color: #0c4a6e;
-            font-weight: 600;
+        ::-webkit-scrollbar-thumb:hover {
+            background: #0284c7;
         }
-        .table-input:hover {
-            border-color: #bae6fd;
-            background: #ffffff;
+        /* Custom input focus ring */
+        .input-vibrant {
+            transition: all 0.2s ease-in-out;
+            background-color: #ffffff;
+            border: 1px solid #bae6fd;
         }
-        .table-input:focus {
-            outline: none;
+        .input-vibrant:focus {
             border-color: #0284c7;
-            background: #ffffff;
-            box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
-        }
-        .table-input[readonly] {
-            background: #f8fafc;
-            color: #64748b;
-            cursor: not-allowed;
-            border-color: transparent;
-        }
-        .number-display {
-            font-variant-numeric: tabular-nums;
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+            outline: none;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="text-slate-800 pb-12">
 
-    <!-- Notification Toast Modal -->
-    <div id="toast" class="fixed top-5 right-5 z-50 transform transition-all duration-300 translate-x-full opacity-0 max-w-md bg-sky-900 text-white px-5 py-3 rounded-lg shadow-2xl flex items-center gap-3 border border-sky-700">
-        <i id="toast-icon" class="fa-solid fa-circle-info text-xl text-sky-300"></i>
-        <span id="toast-msg" class="text-sm font-semibold">系統訊息</span>
-    </div>
+    <!-- Notification Toast Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-    <!-- Login Container -->
-    <div id="login-screen" class="fixed inset-0 bg-sky-950 bg-opacity-95 z-40 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl border border-sky-200 w-full max-w-md p-8">
-            <div class="text-center mb-6">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-sky-100 mb-3 border border-sky-300">
-                    <i class="fa-solid fa-building-columns text-3xl text-sky-700"></i>
+    <!-- Header Section -->
+    <header class="bg-gradient-to-r from-sky-600 via-blue-600 to-teal-500 text-white shadow-lg sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-white/20 p-2.5 rounded-xl backdrop-blur-md shadow-inner">
+                        <i class="fa-solid font-bold fa-building-user text-2xl text-amber-300"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-extrabold tracking-wide drop-shadow">中華新幹線大廈社區財務管理系統</h1>
+                        <p class="text-sky-100 text-xs mt-0.5 flex items-center gap-2">
+                            <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            智慧型財務管理 & 即時雲端同步系統
+                        </p>
+                    </div>
                 </div>
-                <h1 class="text-2xl font-bold text-gray-900 tracking-wide">中華新幹線大廈</h1>
-                <p class="text-sm text-sky-600 font-semibold mt-1">社區財務管理系統 - 登入入口</p>
+
+                <!-- Year & Month Selector & Status -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex items-center bg-white/15 p-1.5 rounded-xl backdrop-blur-md border border-white/20">
+                        <i class="fa-solid fa-calendar-days text-sky-200 ml-2 mr-1"></i>
+                        <select id="yearSelect" onchange="onDateChange()" class="bg-transparent text-white font-bold text-sm focus:outline-none cursor-pointer pr-2">
+                            <!-- JS populated -->
+                        </select>
+                        <span class="text-sky-200 font-bold px-1">年</span>
+                        <select id="monthSelect" onchange="onDateChange()" class="bg-transparent text-white font-bold text-sm focus:outline-none cursor-pointer pr-2">
+                            <!-- JS populated -->
+                        </select>
+                        <span class="text-sky-200 font-bold pr-2">月</span>
+                    </div>
+
+                    <!-- Auto Sync Status Indicator -->
+                    <div id="syncStatus" class="bg-sky-900/40 border border-sky-300/30 text-white text-xs px-3 py-2 rounded-xl flex items-center space-x-2 backdrop-blur-md">
+                        <i id="syncIcon" class="fa-solid fa-cloud-check text-emerald-300"></i>
+                        <span id="syncText" class="font-medium">雲端已同步</span>
+                        <span id="lastSyncTime" class="text-sky-200 text-[10px] hidden sm:inline">--:--:--</span>
+                    </div>
+                </div>
             </div>
+        </div>
 
-            <form id="login-form" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">電子郵件 (Email)</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                            <i class="fa-solid fa-envelope"></i>
-                        </span>
-                        <input type="email" id="login-email" required class="w-full pl-10 pr-3 py-2.5 bg-sky-50/50 border border-sky-200 rounded-lg text-gray-900 font-medium focus:ring-2 focus:ring-sky-600 focus:bg-white text-sm" placeholder="admin@building.com">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">密碼 (Password)</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                            <i class="fa-solid fa-lock"></i>
-                        </span>
-                        <input type="password" id="login-password" required class="w-full pl-10 pr-3 py-2.5 bg-sky-50/50 border border-sky-200 rounded-lg text-gray-900 font-medium focus:ring-2 focus:ring-sky-600 focus:bg-white text-sm" placeholder="••••••••">
-                    </div>
-                </div>
-
-                <div id="login-error" class="hidden text-rose-600 text-xs font-bold bg-rose-50 p-2.5 rounded border border-rose-200"></div>
-
-                <button type="submit" id="btn-login-submit" class="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg shadow-md transition flex items-center justify-center gap-2 text-sm">
-                    <i class="fa-solid fa-right-to-bracket"></i> 安全登入系統
+        <!-- Tab Navigation Bar -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-2">
+            <nav class="flex space-x-2 border-b border-white/20 overflow-x-auto pb-1 scrollbar-none">
+                <button onclick="switchTab('tab1')" id="nav-tab1" class="tab-btn active-tab flex items-center space-x-2 px-5 py-2.5 rounded-t-xl font-bold text-sm transition-all duration-200 bg-white text-sky-700 shadow-md">
+                    <i class="fa-solid fa-sack-dollar text-amber-500"></i>
+                    <span>每月收入表</span>
                 </button>
-            </form>
-            
-            <div class="mt-6 pt-4 border-t border-sky-100 text-center text-xs text-gray-500">
-                <i class="fa-solid fa-shield-halved text-sky-600"></i> Firebase 雲端整合服務加密保護
-            </div>
+                <button onclick="switchTab('tab2')" id="nav-tab2" class="tab-btn flex items-center space-x-2 px-5 py-2.5 rounded-t-xl font-bold text-sm transition-all duration-200 text-white hover:bg-white/10">
+                    <i class="fa-solid fa-clock text-teal-300"></i>
+                    <span>管理員時數表</span>
+                </button>
+                <button onclick="switchTab('tab3')" id="nav-tab3" class="tab-btn flex items-center space-x-2 px-5 py-2.5 rounded-t-xl font-bold text-sm transition-all duration-200 text-white hover:bg-white/10">
+                    <i class="fa-solid fa-chart-line text-sky-200"></i>
+                    <span>收支月報表</span>
+                </button>
+                <button onclick="switchTab('tab4')" id="nav-tab4" class="tab-btn flex items-center space-x-2 px-5 py-2.5 rounded-t-xl font-bold text-sm transition-all duration-200 text-white hover:bg-white/10">
+                    <i class="fa-solid fa-chart-pie text-pink-300"></i>
+                    <span>統計與圖表分析</span>
+                </button>
+            </nav>
         </div>
-    </div>
+    </header>
 
-    <!-- Main Dashboard UI -->
-    <div id="app-dashboard" class="hidden flex-1 flex flex-col">
-        
-        <!-- Header Top Bar -->
-        <header class="bg-white border-b border-sky-200 sticky top-0 z-30 shadow-sm">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
-                
-                <!-- Brand Title -->
-                <div class="flex items-center gap-3">
-                    <div class="bg-sky-600 text-white p-2.5 rounded-lg shadow">
-                        <i class="fa-solid fa-building-user text-xl"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-xl font-black text-gray-900 tracking-tight">中華新幹線大廈管理委員會</h1>
-                        <p class="text-xs font-bold text-sky-600">企業級社區財務雲端管理系統 (明亮活潑版)</p>
-                    </div>
-                </div>
+    <!-- Main Content Area -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
 
-                <!-- Status Badges & Time Indicator -->
-                <div class="flex flex-wrap items-center gap-3 text-xs">
-                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-50 border border-sky-200 font-bold" id="conn-status-badge">
-                        <span class="w-2.5 h-2.5 rounded-full bg-gray-400" id="conn-dot"></span>
-                        <span id="conn-text" class="text-sky-800">連線中...</span>
-                    </div>
-
-                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-50 border border-sky-200 text-sky-900 font-bold">
-                        <i class="fa-solid fa-floppy-disk text-sky-600"></i>
-                        <span>上次儲存: <span id="last-saved-time" class="text-sky-950 font-extrabold">未同步</span></span>
-                    </div>
-
-                    <div class="flex items-center gap-2 border-l pl-3 border-sky-200">
-                        <span id="user-email-display" class="font-bold text-sky-900 bg-sky-100 px-2.5 py-1 rounded">--</span>
-                        <button id="btn-logout" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded shadow transition flex items-center gap-1">
-                            <i class="fa-solid fa-arrow-right-from-bracket"></i> 登出
-                        </button>
-                    </div>
-                </div>
+        <!-- Global Action Toolbar -->
+        <div class="glass-card rounded-2xl p-4 mb-6 flex flex-wrap items-center justify-between gap-4 border border-sky-100">
+            <div class="flex items-center space-x-3">
+                <span id="currentDateTitle" class="text-xl font-extrabold text-sky-900 flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-check text-sky-600"></i>
+                    <span id="titleYear">2026</span> 年 <span id="titleMonth">10</span> 月 財務紀錄
+                </span>
             </div>
-        </header>
 
-        <!-- Sub-Bar: Month Selector & Global Actions -->
-        <div class="bg-sky-100 border-b border-sky-200 shadow-inner py-2.5 px-4">
-            <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
-                
-                <div class="flex items-center gap-3">
-                    <label for="current-month-select" class="text-sm font-extrabold text-sky-950 flex items-center gap-1.5">
-                        <i class="fa-solid fa-calendar-days text-sky-700"></i> 當前會計月份 (YYYY/MM):
-                    </label>
-                    <input type="month" id="current-month-select" value="2026-10" class="bg-white border-2 border-sky-400 text-sky-950 text-sm font-extrabold rounded-md px-3 py-1 focus:ring-2 focus:ring-sky-600 focus:border-sky-600 shadow-sm">
-                    <span id="current-sheet-code" class="text-xs bg-sky-700 text-white font-mono font-bold px-2 py-1 rounded shadow-sm">工作表代碼: 202610</span>
-                </div>
-
-                <div class="flex flex-wrap items-center gap-2">
-                    <button id="btn-force-save" class="px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded shadow transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-cloud-arrow-up"></i> 儲存變更至雲端
-                    </button>
-                    <button id="btn-export-excel" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded shadow transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-file-excel"></i> 一鍵匯出所有表格 (Excel)
-                    </button>
-                    <label class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded shadow cursor-pointer transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-file-import"></i> 一鍵匯入表格 (Excel)
-                        <input type="file" id="excel-import-input" accept=".xlsx, .xls" class="hidden">
-                    </label>
-                </div>
+            <!-- Import / Export Controls -->
+            <div class="flex flex-wrap items-center gap-2">
+                <button onclick="exportToExcel()" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold px-4 py-2 rounded-xl text-sm shadow-md transition-all flex items-center space-x-2 active:scale-95">
+                    <i class="fa-solid fa-file-excel"></i>
+                    <span>匯出本月 Excel</span>
+                </button>
+                <label class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold px-4 py-2 rounded-xl text-sm shadow-md transition-all flex items-center space-x-2 cursor-pointer active:scale-95">
+                    <i class="fa-solid fa-file-import"></i>
+                    <span>匯入 Excel</span>
+                    <input type="file" id="excelFileInput" accept=".xlsx, .xls" class="hidden" onchange="importFromExcel(event)">
+                </label>
             </div>
         </div>
 
-        <!-- Main Navigation Tabs -->
-        <div class="bg-white border-b border-sky-200">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <nav class="flex space-x-1 sm:space-x-4 overflow-x-auto py-2" id="main-nav-tabs">
-                    <button data-tab="tab-income" class="nav-tab px-4 py-2.5 rounded-lg font-extrabold text-sm transition whitespace-nowrap bg-sky-600 text-white shadow">
-                        <i class="fa-solid fa-receipt mr-1.5"></i> 1. 每月收入表
+        <!-- TAB 1: 每月收入表 -->
+        <section id="tab1-content" class="tab-content space-y-6">
+            <div class="glass-card rounded-2xl p-6 shadow-xl border border-sky-100">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-lg font-bold text-sky-900 flex items-center gap-2">
+                            <i class="fa-solid fa-file-invoice-dollar text-sky-600"></i>
+                            每月收入管理 (含管理費與各項雜收)
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">點選欄位修改內容將自動儲存並計算</p>
+                    </div>
+                    <button onclick="addRow('incomeTableBody')" class="bg-sky-600 hover:bg-sky-700 text-white font-bold px-4 py-2 rounded-xl text-sm shadow transition flex items-center space-x-2">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>新增收入項目</span>
                     </button>
-                    <button data-tab="tab-guard" class="nav-tab px-4 py-2.5 rounded-lg font-extrabold text-sm transition whitespace-nowrap text-sky-900 hover:bg-sky-100">
-                        <i class="fa-solid fa-user-clock mr-1.5"></i> 2. 管理員時數表
-                    </button>
-                    <button data-tab="tab-financial" class="nav-tab px-4 py-2.5 rounded-lg font-extrabold text-sm transition whitespace-nowrap text-sky-900 hover:bg-sky-100">
-                        <i class="fa-solid fa-scale-balanced mr-1.5"></i> 3. 收支月報表
-                    </button>
-                    <button data-tab="tab-chart1" class="nav-tab px-4 py-2.5 rounded-lg font-extrabold text-sm transition whitespace-nowrap text-sky-900 hover:bg-sky-100">
-                        <i class="fa-solid fa-chart-pie mr-1.5"></i> 4. 分析圖表1 (繳費狀態)
-                    </button>
-                    <button data-tab="tab-chart2" class="nav-tab px-4 py-2.5 rounded-lg font-extrabold text-sm transition whitespace-nowrap text-sky-900 hover:bg-sky-100">
-                        <i class="fa-solid fa-chart-line mr-1.5"></i> 5. 分析圖表2 (累積趨勢)
-                    </button>
-                </nav>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-sky-200 shadow-inner">
+                    <table class="w-full text-sm text-left text-slate-700">
+                        <thead class="text-xs text-white uppercase bg-gradient-to-r from-sky-600 to-blue-700 sticky top-0">
+                            <tr>
+                                <th class="px-4 py-3.5 text-center w-12">#</th>
+                                <th class="px-4 py-3.5">收費日期</th>
+                                <th class="px-4 py-3.5">門牌 / 繳款人</th>
+                                <th class="px-4 py-3.5">收入類別</th>
+                                <th class="px-4 py-3.5 text-right">金額 (NT$)</th>
+                                <th class="px-4 py-3.5">收款方式</th>
+                                <th class="px-4 py-3.5">備註說明</th>
+                                <th class="px-4 py-3.5 text-center w-28">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="incomeTableBody" class="divide-y divide-sky-100 bg-white">
+                            <!-- Dynamic Content -->
+                        </tbody>
+                        <tfoot class="bg-sky-50/80 font-bold text-sky-900 border-t-2 border-sky-200">
+                            <tr>
+                                <td colspan="4" class="px-4 py-3 text-right">收入總計：</td>
+                                <td id="incomeTotalSum" class="px-4 py-3 text-right text-emerald-600 text-base">NT$ 0</td>
+                                <td colspan="3"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Tab Contents Area -->
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
-            
-            <!-- SECTION 1: 每月收入表 -->
-            <section id="tab-income" class="tab-content block space-y-4">
-                <div class="bg-white p-5 rounded-xl border border-sky-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+        <!-- TAB 2: 管理員時數表 -->
+        <section id="tab2-content" class="tab-content hidden space-y-6">
+            <div class="glass-card rounded-2xl p-6 shadow-xl border border-sky-100">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
                     <div>
-                        <h2 class="text-lg font-black text-gray-900 flex items-center gap-2">
-                            <i class="fa-solid fa-money-bill-wave text-emerald-600"></i> 住戶每月收入明細表
+                        <h2 class="text-lg font-bold text-sky-900 flex items-center gap-2">
+                            <i class="fa-solid fa-user-clock text-teal-600"></i>
+                            管理員值勤時數與津貼登記
                         </h2>
-                        <p class="text-xs font-bold text-sky-700 mt-0.5">匯入後「樓層」鎖定不可編輯，各表格具備複製與刪除列位功能</p>
+                        <p class="text-xs text-slate-500 mt-0.5">點選日期欄位可開啟日曆選單，選擇後自動轉換格式</p>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button id="btn-add-income-row" class="px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded shadow transition flex items-center gap-1">
-                            <i class="fa-solid fa-plus"></i> 新增住戶資料
-                        </button>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-xl border border-sky-200 shadow-sm overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-xs">
-                            <thead>
-                                <tr class="bg-sky-600 text-white font-extrabold uppercase tracking-wider">
-                                    <th class="p-3 w-12 text-center border-r border-sky-500">編號</th>
-                                    <th class="p-3 w-20 border-r border-sky-500">樓層</th>
-                                    <th class="p-3 w-28 border-r border-sky-500">住戶姓名</th>
-                                    <th class="p-3 w-24 text-right border-r border-sky-500">月費</th>
-                                    <th class="p-3 w-24 text-right border-r border-sky-500">平面車位</th>
-                                    <th class="p-3 w-24 text-right border-r border-sky-500">機械車位</th>
-                                    <th class="p-3 w-28 text-right border-r border-sky-500">已繳金額</th>
-                                    <th class="p-3 w-32 border-r border-sky-500">匯款日</th>
-                                    <th class="p-3 border-r border-sky-500">備註</th>
-                                    <th class="p-3 w-24 text-center">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="income-tbody" class="divide-y divide-sky-100 font-bold text-gray-900">
-                                <!-- Dynamic Rows -->
-                            </tbody>
-                            <tfoot class="bg-sky-50 font-black border-t-2 border-sky-300">
-                                <tr>
-                                    <td colspan="3" class="p-3 text-right">合計 (Total):</td>
-                                    <td class="p-3 text-right text-sky-950 number-display" id="total-income-fee">NT$ 0</td>
-                                    <td class="p-3 text-right text-sky-950 number-display" id="total-income-flat">NT$ 0</td>
-                                    <td class="p-3 text-right text-sky-950 number-display" id="total-income-mech">NT$ 0</td>
-                                    <td class="p-3 text-right text-emerald-700 font-extrabold text-sm number-display" id="total-income-paid">NT$ 0</td>
-                                    <td colspan="3" class="p-3 text-xs text-sky-800 font-semibold">應收總計: <span id="total-income-due" class="font-bold text-sky-950">NT$ 0</span></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SECTION 2: 管理員時數表 -->
-            <section id="tab-guard" class="tab-content hidden space-y-4">
-                <div class="bg-white p-5 rounded-xl border border-sky-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
-                    <div>
-                        <h2 class="text-lg font-black text-gray-900 flex items-center gap-2">
-                            <i class="fa-solid fa-clock-rotate-left text-sky-600"></i> 管理員與清潔人員時數紀錄表
-                        </h2>
-                        <p class="text-xs font-bold text-sky-700 mt-0.5">點擊日期欄位可開啟日曆選擇 YYYYMMDD，總時數與金額自動計算 (時薪 $196)</p>
-                    </div>
-                    <button id="btn-add-guard-row" class="px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded shadow transition flex items-center gap-1">
-                        <i class="fa-solid fa-plus"></i> 新增值勤日期
+                    <button onclick="addRow('guardTableBody')" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-4 py-2 rounded-xl text-sm shadow transition flex items-center space-x-2">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>新增值勤紀錄</span>
                     </button>
                 </div>
 
-                <div class="bg-white rounded-xl border border-sky-200 shadow-sm overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-xs">
-                            <thead>
-                                <tr class="bg-sky-600 text-white font-extrabold uppercase tracking-wider">
-                                    <th class="p-3 w-40 border-r border-sky-500">日期選擇 (YYYYMMDD)</th>
-                                    <th class="p-3 w-20 border-r border-sky-500 text-center">星期</th>
-                                    <th class="p-3 w-28 text-right border-r border-sky-500">謝OO 時數</th>
-                                    <th class="p-3 w-28 text-right border-r border-sky-500">周OO 時數</th>
-                                    <th class="p-3 w-24 text-right border-r border-sky-500 bg-sky-700">總時數</th>
-                                    <th class="p-3 w-32 text-right border-r border-sky-500 bg-sky-700">總金額 ($196/h)</th>
-                                    <th class="p-3 w-28 border-r border-sky-500">下班時間</th>
-                                    <th class="p-3 w-28 border-r border-sky-500">簽名</th>
-                                    <th class="p-3 border-r border-sky-500">清潔人員</th>
-                                    <th class="p-3 w-24 text-center">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="guard-tbody" class="divide-y divide-sky-100 font-bold text-gray-900">
-                                <!-- Dynamic Rows -->
-                            </tbody>
-                            <tfoot class="bg-sky-50 font-black border-t-2 border-sky-300">
-                                <tr>
-                                    <td colspan="2" class="p-3 text-right">月累計 Total:</td>
-                                    <td class="p-3 text-right number-display" id="total-guard-xie">0 hrs</td>
-                                    <td class="p-3 text-right number-display" id="total-guard-zhou">0 hrs</td>
-                                    <td class="p-3 text-right text-sky-900 font-extrabold bg-sky-100 number-display" id="total-guard-hours">0 hrs</td>
-                                    <td class="p-3 text-right text-sky-900 font-extrabold bg-sky-100 number-display" id="total-guard-amount">NT$ 0</td>
-                                    <td colspan="4" class="p-3 text-sky-800 text-xs">費率計算公式: 總時數 × NT$196/小時</td>
-                                </tr>
-                            </tfoot>
-                        </table>
+                <div class="overflow-x-auto rounded-xl border border-teal-200 shadow-inner">
+                    <table class="w-full text-sm text-left text-slate-700">
+                        <thead class="text-xs text-white uppercase bg-gradient-to-r from-teal-600 to-sky-700 sticky top-0">
+                            <tr>
+                                <th class="px-4 py-3.5 text-center w-12">#</th>
+                                <th class="px-4 py-3.5">值勤日期</th>
+                                <th class="px-4 py-3.5">管理員姓名</th>
+                                <th class="px-4 py-3.5 text-right">值勤時數 (HR)</th>
+                                <th class="px-4 py-3.5 text-right">時薪/津貼 (NT$)</th>
+                                <th class="px-4 py-3.5 text-right">小計金額 (NT$)</th>
+                                <th class="px-4 py-3.5">工作備註</th>
+                                <th class="px-4 py-3.5 text-center w-28">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="guardTableBody" class="divide-y divide-teal-100 bg-white">
+                            <!-- Dynamic Content -->
+                        </tbody>
+                        <tfoot class="bg-teal-50/80 font-bold text-teal-900 border-t-2 border-teal-200">
+                            <tr>
+                                <td colspan="3" class="px-4 py-3 text-right">合計：</td>
+                                <td id="guardTotalHours" class="px-4 py-3 text-right text-sky-700">0 小時</td>
+                                <td class="px-4 py-3"></td>
+                                <td id="guardTotalAmount" class="px-4 py-3 text-right text-emerald-600 text-base">NT$ 0</td>
+                                <td colspan="2"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: 收支月報表 -->
+        <section id="tab3-content" class="tab-content hidden space-y-6">
+            <!-- Opening Balances Card -->
+            <div class="glass-card rounded-2xl p-6 shadow-xl border border-sky-200 bg-gradient-to-r from-sky-50/50 to-blue-50/50">
+                <h3 class="text-md font-extrabold text-sky-900 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-piggy-bank text-amber-500"></i>
+                    本月期初金額設定 (累積結餘基準)
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-4 rounded-xl border border-sky-100 shadow-sm flex items-center justify-between">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase">期初現金金額 (NT$)</label>
+                            <input type="number" id="openingCash" onchange="autoSyncData()" value="0" class="input-vibrant w-full mt-1 text-lg font-bold text-slate-800 px-3 py-1.5 rounded-lg">
+                        </div>
+                        <i class="fa-solid fa-money-bill-wave text-3xl text-emerald-400 opacity-60 ml-3"></i>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border border-sky-100 shadow-sm flex items-center justify-between">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase">期初帳戶金額 (NT$)</label>
+                            <input type="number" id="openingBank" onchange="autoSyncData()" value="0" class="input-vibrant w-full mt-1 text-lg font-bold text-slate-800 px-3 py-1.5 rounded-lg">
+                        </div>
+                        <i class="fa-solid fa-building-columns text-3xl text-sky-400 opacity-60 ml-3"></i>
                     </div>
                 </div>
-            </section>
+            </div>
 
-            <!-- SECTION 3: 收支月報表 -->
-            <section id="tab-financial" class="tab-content hidden space-y-4">
-                <div class="bg-white p-6 rounded-xl border border-sky-200 shadow-sm space-y-4">
-                    <!-- Title Header -->
-                    <div class="text-center border-b border-sky-200 pb-4">
-                        <div class="flex items-center justify-center gap-2">
-                            <input type="text" id="financial-header-title" value="中華新幹線大廈管理委員會 2026年10月 收支明細表" class="text-xl sm:text-2xl font-black text-center text-gray-900 border-b-2 border-dashed border-sky-300 focus:border-sky-600 focus:outline-none px-4 py-1 w-full max-w-2xl bg-transparent">
-                            <i class="fa-solid fa-pen-to-square text-sky-500 text-sm"></i>
-                        </div>
-                        <p class="text-xs text-sky-600 font-bold mt-1">（點擊標題文字可直接修改報表名稱與年月）</p>
-                    </div>
-
-                    <!-- Initial Balance Settings (期初金額: 現金與帳戶) -->
-                    <div class="bg-sky-50 border border-sky-300 p-4 rounded-xl grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-sky-600 text-white flex items-center justify-center font-bold">
-                                <i class="fa-solid fa-wallet"></i>
-                            </div>
-                            <div class="flex-1">
-                                <label class="block text-xs font-bold text-sky-900 mb-0.5">期初現金金額 (Initial Cash)</label>
-                                <input type="number" id="input-initial-cash" class="table-input bg-white border border-sky-300 font-mono text-base font-black text-sky-900" value="50000" onchange="updateInitialBalance('cash', this.value)">
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-sky-700 text-white flex items-center justify-center font-bold">
-                                <i class="fa-solid fa-building-columns"></i>
-                            </div>
-                            <div class="flex-1">
-                                <label class="block text-xs font-bold text-sky-900 mb-0.5">期初帳戶金額 (Initial Account)</label>
-                                <input type="number" id="input-initial-account" class="table-input bg-white border border-sky-300 font-mono text-base font-black text-sky-900" value="200000" onchange="updateInitialBalance('account', this.value)">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Summary Cards Bar -->
-                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 pt-2">
-                        <div class="bg-emerald-50 border border-emerald-300 p-3 rounded-lg text-center">
-                            <p class="text-xs font-bold text-emerald-800">總收入 (Income)</p>
-                            <p id="card-total-income" class="text-base sm:text-lg font-black text-emerald-900 mt-1 number-display">NT$ 0</p>
-                        </div>
-                        <div class="bg-rose-50 border border-rose-300 p-3 rounded-lg text-center">
-                            <p class="text-xs font-bold text-rose-800">總支出 (Expense)</p>
-                            <p id="card-total-expense" class="text-base sm:text-lg font-black text-rose-900 mt-1 number-display">NT$ 0</p>
-                        </div>
-                        <div class="bg-sky-50 border border-sky-300 p-3 rounded-lg text-center">
-                            <p class="text-xs font-bold text-sky-800">本月結餘 (Net)</p>
-                            <p id="card-net-balance" class="text-base sm:text-lg font-black text-sky-950 mt-1 number-display">NT$ 0</p>
-                        </div>
-                        <div class="bg-sky-100 border border-sky-300 p-3 rounded-lg text-center">
-                            <p class="text-xs font-bold text-sky-800">現金結餘 (含期初)</p>
-                            <p id="card-cash-net" class="text-base sm:text-lg font-black text-sky-950 mt-1 number-display">NT$ 0</p>
-                        </div>
-                        <div class="bg-sky-100 border border-sky-300 p-3 rounded-lg text-center col-span-2 md:col-span-1">
-                            <p class="text-xs font-bold text-sky-800">帳戶結餘 (含期初)</p>
-                            <p id="card-account-net" class="text-base sm:text-lg font-black text-sky-950 mt-1 number-display">NT$ 0</p>
-                        </div>
-                    </div>
-
-                    <!-- Add Row Button -->
-                    <div class="flex justify-between items-center pt-2">
-                        <h3 class="text-sm font-black text-gray-800">收支細項登記簿</h3>
-                        <button id="btn-add-financial-row" class="px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded shadow transition flex items-center gap-1">
-                            <i class="fa-solid fa-plus"></i> 新增收支項目
-                        </button>
-                    </div>
-
-                    <!-- Table -->
-                    <div class="overflow-x-auto border border-sky-200 rounded-lg">
-                        <table class="w-full text-left border-collapse text-xs">
-                            <thead>
-                                <tr class="bg-sky-600 text-white font-extrabold uppercase tracking-wider">
-                                    <th class="p-3 border-r border-sky-500">項目說明</th>
-                                    <th class="p-3 w-28 text-right border-r border-sky-500 bg-rose-700">現金支出</th>
-                                    <th class="p-3 w-28 text-right border-r border-sky-500 bg-rose-800">帳戶支出</th>
-                                    <th class="p-3 w-28 text-right border-r border-sky-500 bg-emerald-700">現金收入</th>
-                                    <th class="p-3 w-28 text-right border-r border-sky-500 bg-emerald-800">帳戶收入</th>
-                                    <th class="p-3 border-r border-sky-500">備註</th>
-                                    <th class="p-3 w-24 text-center">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="financial-tbody" class="divide-y divide-sky-100 font-bold text-gray-900">
-                                <!-- Dynamic Rows -->
-                            </tbody>
-                            <tfoot class="bg-sky-50 font-black border-t-2 border-sky-300">
-                                <tr>
-                                    <td class="p-3 text-right">本月小計:</td>
-                                    <td class="p-3 text-right text-rose-700 number-display" id="fin-total-cash-exp">NT$ 0</td>
-                                    <td class="p-3 text-right text-rose-700 number-display" id="fin-total-acc-exp">NT$ 0</td>
-                                    <td class="p-3 text-right text-emerald-700 number-display" id="fin-total-cash-inc">NT$ 0</td>
-                                    <td class="p-3 text-right text-emerald-700 number-display" id="fin-total-acc-inc">NT$ 0</td>
-                                    <td colspan="2"></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SECTION 4: 分析圖表 1 (繳費狀態) -->
-            <section id="tab-chart1" class="tab-content hidden space-y-6">
-                <div class="bg-white p-5 rounded-xl border border-sky-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+            <!-- Expense & Income Detailed Report Table -->
+            <div class="glass-card rounded-2xl p-6 shadow-xl border border-sky-100">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
                     <div>
-                        <h2 class="text-lg font-black text-gray-900 flex items-center gap-2">
-                            <i class="fa-solid fa-chart-pie text-sky-600"></i> 分析圖表 1: 住戶繳費與未繳費追蹤
+                        <h2 class="text-lg font-bold text-sky-900 flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-blue-600"></i>
+                            收支月報表 (綜合總明細)
                         </h2>
-                        <p class="text-xs font-bold text-sky-700 mt-0.5">系統自動比對「每月收入表」，列出繳費狀態與對應差額金額</p>
+                        <p class="text-xs text-slate-500 mt-0.5">彙整社區各項支出與收入，系統即時連動計算現金與銀行帳戶餘額</p>
                     </div>
-                    <button id="btn-export-chart1-png" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded shadow transition flex items-center gap-2">
-                        <i class="fa-solid fa-download"></i> 一鍵匯出高畫質 PNG 圖表
+                    <button onclick="addRow('reportTableBody')" class="bg-sky-600 hover:bg-sky-700 text-white font-bold px-4 py-2 rounded-xl text-sm shadow transition flex items-center space-x-2">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>新增收支項目</span>
                     </button>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div class="bg-white p-4 rounded-xl border border-sky-200 shadow-sm flex items-center justify-between">
-                        <div>
-                            <p class="text-xs font-extrabold text-gray-500">已繳費住戶數</p>
-                            <p id="chart1-paid-count" class="text-2xl font-black text-emerald-600 mt-1">0 戶</p>
-                        </div>
-                        <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-black text-lg">
-                            <i class="fa-solid fa-circle-check"></i>
-                        </div>
-                    </div>
-                    <div class="bg-white p-4 rounded-xl border border-sky-200 shadow-sm flex items-center justify-between">
-                        <div>
-                            <p class="text-xs font-extrabold text-gray-500">未繳費 / 欠繳住戶</p>
-                            <p id="chart1-unpaid-count" class="text-2xl font-black text-rose-600 mt-1">0 戶</p>
-                        </div>
-                        <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 font-black text-lg">
-                            <i class="fa-solid fa-triangle-exclamation"></i>
-                        </div>
-                    </div>
-                    <div class="bg-white p-4 rounded-xl border border-sky-200 shadow-sm flex items-center justify-between">
-                        <div>
-                            <p class="text-xs font-extrabold text-gray-500">已收實繳累積 (+)</p>
-                            <p id="chart1-paid-amount" class="text-xl font-black text-emerald-700 mt-1 number-display">NT$ 0</p>
-                        </div>
-                        <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-black text-lg">
-                            <i class="fa-solid fa-plus"></i>
-                        </div>
-                    </div>
-                    <div class="bg-white p-4 rounded-xl border border-sky-200 shadow-sm flex items-center justify-between">
-                        <div>
-                            <p class="text-xs font-extrabold text-gray-500">未繳累積差額 (-)</p>
-                            <p id="chart1-unpaid-amount" class="text-xl font-black text-rose-700 mt-1 number-display">NT$ 0</p>
-                        </div>
-                        <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-700 font-black text-lg">
-                            <i class="fa-solid fa-minus"></i>
-                        </div>
-                    </div>
+                <div class="overflow-x-auto rounded-xl border border-sky-200 shadow-inner">
+                    <table class="w-full text-sm text-left text-slate-700">
+                        <thead class="text-xs text-white uppercase bg-gradient-to-r from-blue-600 via-sky-600 to-indigo-600 sticky top-0">
+                            <tr>
+                                <th class="px-4 py-3.5 text-center w-12">#</th>
+                                <th class="px-4 py-3.5">日期</th>
+                                <th class="px-4 py-3.5">收支類型</th>
+                                <th class="px-4 py-3.5">科目類別</th>
+                                <th class="px-4 py-3.5">摘要/說明</th>
+                                <th class="px-4 py-3.5 text-right">金額 (NT$)</th>
+                                <th class="px-4 py-3.5">支付方式</th>
+                                <th class="px-4 py-3.5">經手人/經辦</th>
+                                <th class="px-4 py-3.5 text-center w-28">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody" class="divide-y divide-sky-100 bg-white">
+                            <!-- Dynamic Content -->
+                        </tbody>
+                    </table>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white p-5 rounded-xl border border-sky-200 shadow-sm space-y-3">
-                        <h3 class="text-sm font-black text-gray-900 border-b pb-2">已繳 vs 未繳 比例與金額總計</h3>
-                        <div class="relative h-72 w-full flex items-center justify-center">
-                            <canvas id="chart1-canvas"></canvas>
-                        </div>
+                <!-- Live Summary Cards -->
+                <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-4 rounded-xl shadow-md">
+                        <div class="text-xs opacity-80 font-bold uppercase">本月總收入</div>
+                        <div id="summaryIncome" class="text-xl font-black mt-1">NT$ 0</div>
                     </div>
-
-                    <div class="bg-white p-5 rounded-xl border border-sky-200 shadow-sm space-y-4 flex flex-col">
-                        <h3 class="text-sm font-black text-gray-900 border-b pb-2">住戶繳費清單名冊</h3>
-                        
-                        <div class="grid grid-cols-2 gap-4 flex-1">
-                            <div class="border border-emerald-200 bg-emerald-50/50 rounded-lg p-3 flex flex-col">
-                                <h4 class="text-xs font-black text-emerald-800 mb-2 flex items-center justify-between">
-                                    <span><i class="fa-solid fa-check text-emerald-600"></i> 已繳費人員</span>
-                                    <span id="badge-paid-num" class="bg-emerald-200 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full">0</span>
-                                </h4>
-                                <div id="chart1-paid-list" class="overflow-y-auto max-h-60 space-y-1.5 text-xs font-bold"></div>
-                            </div>
-
-                            <div class="border border-rose-200 bg-rose-50/50 rounded-lg p-3 flex flex-col">
-                                <h4 class="text-xs font-black text-rose-800 mb-2 flex items-center justify-between">
-                                    <span><i class="fa-solid fa-xmark text-rose-600"></i> 未繳費/待補人員</span>
-                                    <span id="badge-unpaid-num" class="bg-rose-200 text-rose-800 text-[10px] px-2 py-0.5 rounded-full">0</span>
-                                </h4>
-                                <div id="chart1-unpaid-list" class="overflow-y-auto max-h-60 space-y-1.5 text-xs font-bold"></div>
-                            </div>
-                        </div>
+                    <div class="bg-gradient-to-br from-rose-500 to-pink-600 text-white p-4 rounded-xl shadow-md">
+                        <div class="text-xs opacity-80 font-bold uppercase">本月總支出</div>
+                        <div id="summaryExpense" class="text-xl font-black mt-1">NT$ 0</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-sky-500 to-blue-600 text-white p-4 rounded-xl shadow-md">
+                        <div class="text-xs opacity-80 font-bold uppercase">現金總結餘 (含期初)</div>
+                        <div id="summaryCashBalance" class="text-xl font-black mt-1">NT$ 0</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-4 rounded-xl shadow-md">
+                        <div class="text-xs opacity-80 font-bold uppercase">帳戶總結餘 (含期初)</div>
+                        <div id="summaryBankBalance" class="text-xl font-black mt-1">NT$ 0</div>
                     </div>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <!-- SECTION 5: 分析圖表 2 (累積趨勢) -->
-            <section id="tab-chart2" class="tab-content hidden space-y-6">
-                <div class="bg-white p-5 rounded-xl border border-sky-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+        <!-- TAB 4: 統計與圖表分析 -->
+        <section id="tab4-content" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Chart 1: Income vs Expense Breakdown -->
+                <div class="glass-card rounded-2xl p-6 shadow-xl border border-sky-100 flex flex-col justify-between">
                     <div>
-                        <h2 class="text-lg font-black text-gray-900 flex items-center gap-2">
-                            <i class="fa-solid fa-chart-line text-sky-600"></i> 分析圖表 2: 月份對應逐月累積財務金額趨勢
-                        </h2>
-                        <p class="text-xs font-bold text-sky-700 mt-0.5">跨月份財務總結，以期初現金與帳戶金額為起點，展示年度累積收入、支出與結餘曲線</p>
-                    </div>
-                    <button id="btn-export-chart2-png" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded shadow transition flex items-center gap-2">
-                        <i class="fa-solid fa-download"></i> 一鍵匯出高畫質 PNG 圖表
-                    </button>
-                </div>
-
-                <div class="bg-white p-6 rounded-xl border border-sky-200 shadow-sm space-y-4">
-                    <div class="flex items-center justify-between border-b pb-3">
-                        <h3 class="text-sm font-black text-gray-900">年度全期逐月累積收支與淨結餘曲線圖 (含期初基準)</h3>
-                        <span class="text-xs bg-sky-100 text-sky-800 font-bold px-3 py-1 rounded-full border border-sky-200">數據來源: 歷史月報庫</span>
-                    </div>
-                    <div class="relative h-96 w-full">
-                        <canvas id="chart2-canvas"></canvas>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-sky-900 flex items-center gap-2">
+                                <i class="fa-solid fa-chart-column text-sky-600"></i>
+                                本月收支類別比例分析
+                            </h3>
+                            <button onclick="downloadChartPNG('chartIncomeExpense', '收支類別比例圖.png')" class="text-xs bg-sky-100 hover:bg-sky-200 text-sky-700 px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1">
+                                <i class="fa-solid fa-download"></i> 下載 PNG
+                            </button>
+                        </div>
+                        <div class="relative h-64 w-full flex items-center justify-center">
+                            <canvas id="chartIncomeExpense"></canvas>
+                        </div>
                     </div>
                 </div>
-            </section>
 
-        </main>
-    </div>
+                <!-- Chart 2: Cumulative Cash & Bank Trend -->
+                <div class="glass-card rounded-2xl p-6 shadow-xl border border-sky-100 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-sky-900 flex items-center gap-2">
+                                <i class="fa-solid fa-chart-line text-teal-600"></i>
+                                本月資金累積走勢圖 (現金 vs 帳戶)
+                            </h3>
+                            <button onclick="downloadChartPNG('chartTrend', '資金累積走勢圖.png')" class="text-xs bg-teal-100 hover:bg-teal-200 text-teal-700 px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1">
+                                <i class="fa-solid fa-download"></i> 下載 PNG
+                            </button>
+                        </div>
+                        <div class="relative h-64 w-full flex items-center justify-center">
+                            <canvas id="chartTrend"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
 
-    <!-- Firebase JS SDKs & Application Logic -->
+    <!-- Firebase Script -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyAOtsxSc3RIgvqd6kEh2K25DfyMSB5CqZ0",
-            authDomain: "hoafinancial-69fff.firebaseapp.com",
-            projectId: "hoafinancial-69fff",
-            storageBucket: "hoafinancial-69fff.firebasestorage.app",
-            messagingSenderId: "104666948737",
-            appId: "1:104666948737:web:1f5e7d27868cfaffbd9980",
-            measurementId: "G-N0GH7NYLS5",
-            databaseURL: "https://hoafinancial-69fff-default-rtdb.firebaseio.com"
+        // Firebase Config Setup
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'zhonghua-shinkansen-app';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "dummy-key",
+            authDomain: "dummy.firebaseapp.com",
+            projectId: "dummy-project"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getDatabase(app);
-
-        let currentMonth = "2026-10";
-        let chartInstance1 = null;
-        let chartInstance2 = null;
+        let app, auth, db;
         let currentUser = null;
+        let isSyncing = false;
+        let syncDebounceTimer = null;
 
-        let currentMonthData = {
-            initialCash: 50000,
-            initialAccount: 200000,
-            incomeRows: [],
-            guardRows: [],
-            financialRows: [],
-            financialTitle: "中華新幹線大廈管理委員會 2026年10月 收支明細表"
-        };
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
 
-        let allMonthsStore = {};
-
-        function showToast(msg, type = 'info') {
-            const toast = document.getElementById('toast');
-            const toastMsg = document.getElementById('toast-msg');
-            const toastIcon = document.getElementById('toast-icon');
-
-            toastMsg.innerText = msg;
-            if (type === 'success') {
-                toastIcon.className = "fa-solid fa-circle-check text-xl text-emerald-400";
-            } else if (type === 'error') {
-                toastIcon.className = "fa-solid fa-circle-exclamation text-xl text-rose-400";
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                signInWithCustomToken(auth, __initial_auth_token).catch(() => signInAnonymously(auth));
             } else {
-                toastIcon.className = "fa-solid fa-circle-info text-xl text-sky-300";
+                signInAnonymously(auth);
             }
 
-            toast.classList.remove('translate-x-full', 'opacity-0');
-            setTimeout(() => {
-                toast.classList.add('translate-x-full', 'opacity-0');
-            }, 3500);
-        }
-
-        function formatNTD(val) {
-            const num = Number(val) || 0;
-            return 'NT$ ' + num.toLocaleString('en-US');
-        }
-
-        function formatNum(val) {
-            const num = Number(val) || 0;
-            return num.toLocaleString('en-US');
-        }
-
-        function getYYYYMM(monthStr) {
-            return monthStr.replace('-', '');
-        }
-
-        function getDayOfWeek(dateStr) {
-            if (!dateStr || dateStr.length !== 8) return '';
-            const y = dateStr.substring(0, 4);
-            const m = dateStr.substring(4, 6);
-            const d = dateStr.substring(6, 8);
-            const dateObj = new Date(`${y}-${m}-${d}`);
-            if (isNaN(dateObj.getTime())) return '';
-            const days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
-            return days[dateObj.getDay()];
-        }
-
-        // Date Picker Helpers for YYYYMMDD
-        function formatYYYYMMDDToInput(yyyymmdd) {
-            if (!yyyymmdd || yyyymmdd.length !== 8) return '';
-            return `${yyyymmdd.substring(0,4)}-${yyyymmdd.substring(4,6)}-${yyyymmdd.substring(6,8)}`;
-        }
-
-        function formatInputToYYYYMMDD(dateStr) {
-            if (!dateStr) return '';
-            return dateStr.replace(/-/g, '');
-        }
-
-        function generateDemoDataForMonth(monthYYYYMM) {
-            const yearStr = monthYYYYMM.substring(0, 4);
-            const monthStr = monthYYYYMM.substring(4, 6);
-
-            return {
-                initialCash: 50000,
-                initialAccount: 200000,
-                incomeRows: [
-                    { id: 1, floor: '2F-A', name: '張偉強', fee: 2000, flatPark: 1500, mechPark: 0, paid: 3500, date: `${yearStr}/${monthStr}/05`, remark: '轉帳' },
-                    { id: 2, floor: '2F-B', name: '李麗芬', fee: 2000, flatPark: 0, mechPark: 1000, paid: 3000, date: `${yearStr}/${monthStr}/06`, remark: '轉帳' },
-                    { id: 3, floor: '3F-A', name: '王士傑', fee: 2200, flatPark: 1500, mechPark: 0, paid: 3700, date: `${yearStr}/${monthStr}/10`, remark: '現金' },
-                    { id: 4, floor: '3F-B', name: '陳美玲', fee: 2200, flatPark: 0, mechPark: 0, paid: 0, date: '', remark: '催繳中' },
-                    { id: 5, floor: '4F-A', name: '林志豪', fee: 2500, flatPark: 1500, mechPark: 0, paid: 4000, date: `${yearStr}/${monthStr}/02`, remark: '轉帳' },
-                    { id: 6, floor: '4F-B', name: '黃雅婷', fee: 2500, flatPark: 0, mechPark: 1000, paid: 3500, date: `${yearStr}/${monthStr}/08`, remark: '轉帳' }
-                ],
-                guardRows: [
-                    { date: `${monthYYYYMM}01`, xieHours: 8, zhouHours: 4, offTime: '20:00', sign: '謝', cleaner: '阿姨' },
-                    { date: `${monthYYYYMM}02`, xieHours: 8, zhouHours: 8, offTime: '22:00', sign: '周', cleaner: '阿姨' },
-                    { date: `${monthYYYYMM}03`, xieHours: 4, zhouHours: 8, offTime: '20:00', sign: '謝', cleaner: '休假' },
-                    { date: `${monthYYYYMM}04`, xieHours: 8, zhouHours: 8, offTime: '22:00', sign: '周', cleaner: '阿姨' }
-                ],
-                financialRows: [
-                    { desc: '住戶管理費與車位費收入', cashExp: 0, accExp: 0, cashInc: 3700, accInc: 14000, remark: '核對無誤' },
-                    { desc: '保全管理員薪資支出', cashExp: 0, accExp: 9408, cashInc: 0, accInc: 0, remark: '銀行轉帳' },
-                    { desc: '電梯定期維護保養費', cashExp: 0, accExp: 3500, cashInc: 0, accInc: 0, remark: '合約款' },
-                    { desc: '公共區域清潔耗材費用', cashExp: 850, accExp: 0, cashInc: 0, accInc: 0, remark: '雜項文具現金支付' }
-                ],
-                financialTitle: `中華新幹線大廈管理委員會 ${yearStr}年${monthStr}月 收支明細表`
-            };
-        }
-
-        function initFirebaseListeners() {
-            const connectedRef = ref(db, ".info/connected");
-            onValue(connectedRef, (snap) => {
-                const connDot = document.getElementById('conn-dot');
-                const connText = document.getElementById('conn-text');
-                if (snap.val() === true) {
-                    connDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
-                    connText.innerText = "雲端連線正常";
-                    connText.className = "text-sky-900 font-extrabold";
-                } else {
-                    connDot.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
-                    connText.innerText = "離線狀態";
-                    connText.className = "text-rose-800 font-extrabold";
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    currentUser = user;
+                    console.log("Firebase Auth Authenticated:", user.uid);
+                    listenToMonthData();
                 }
             });
+        } catch (e) {
+            console.warn("Firebase Init fallback to Local Storage mode:", e);
         }
 
-        async function loadMonthData(monthYYYYMM) {
-            if (!currentUser) return;
+        // Global State & Data Models
+        window.appData = {
+            income: [],
+            guard: [],
+            report: [],
+            openingCash: 0,
+            openingBank: 0
+        };
 
-            const monthRef = ref(db, `hoa_financial/${monthYYYYMM}`);
-            try {
-                const snapshot = await get(monthRef);
-                if (snapshot.exists()) {
-                    currentMonthData = snapshot.val();
-                    if (currentMonthData.initialCash === undefined) currentMonthData.initialCash = 50000;
-                    if (currentMonthData.initialAccount === undefined) currentMonthData.initialAccount = 200000;
+        window.currentYear = new Date().getFullYear();
+        window.currentMonth = new Date().getMonth() + 1;
+
+        // Chart instances
+        let chart1Instance = null;
+        let chart2Instance = null;
+
+        // Init App UI
+        window.addEventListener('DOMContentLoaded', () => {
+            setupYearMonthDropdowns();
+            renderAllTables();
+            updateSummaryAndCharts();
+        });
+
+        // Setup Dropdowns
+        function setupYearMonthDropdowns() {
+            const yearSelect = document.getElementById('yearSelect');
+            const monthSelect = document.getElementById('monthSelect');
+            
+            const startYear = window.currentYear - 3;
+            const endYear = window.currentYear + 3;
+
+            yearSelect.innerHTML = '';
+            for(let y = startYear; y <= endYear; y++) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                if(y === window.currentYear) opt.selected = true;
+                yearSelect.appendChild(opt);
+            }
+
+            monthSelect.innerHTML = '';
+            for(let m = 1; m <= 12; m++) {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.textContent = m < 10 ? '0' + m : m;
+                if(m === window.currentMonth) opt.selected = true;
+                monthSelect.appendChild(opt);
+            }
+
+            updateDateTitles();
+        }
+
+        window.onDateChange = function() {
+            window.currentYear = parseInt(document.getElementById('yearSelect').value);
+            window.currentMonth = parseInt(document.getElementById('monthSelect').value);
+            updateDateTitles();
+            listenToMonthData();
+        };
+
+        function updateDateTitles() {
+            document.getElementById('titleYear').textContent = window.currentYear;
+            document.getElementById('titleMonth').textContent = window.currentMonth < 10 ? '0' + window.currentMonth : window.currentMonth;
+        }
+
+        // Firestore Realtime Listener
+        let unsubscribeDoc = null;
+        function listenToMonthData() {
+            if (!db || !currentUser) return;
+            if (unsubscribeDoc) unsubscribeDoc();
+
+            const docId = `${window.currentYear}-${String(window.currentMonth).padStart(2, '0')}`;
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'monthly_records', docId);
+
+            showSyncStatus('loading', '正在讀取資料...');
+
+            unsubscribeDoc = onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    window.appData.income = data.income || [];
+                    window.appData.guard = data.guard || [];
+                    window.appData.report = data.report || [];
+                    window.appData.openingCash = data.openingCash || 0;
+                    window.appData.openingBank = data.openingBank || 0;
                 } else {
-                    currentMonthData = generateDemoDataForMonth(monthYYYYMM);
-                    await saveMonthDataToFirebase(monthYYYYMM, currentMonthData);
+                    // Empty month initialize
+                    window.appData = { income: [], guard: [], report: [], openingCash: 0, openingBank: 0 };
                 }
                 
-                const allRef = ref(db, `hoa_financial`);
-                const allSnap = await get(allRef);
-                if (allSnap.exists()) {
-                    allMonthsStore = allSnap.val();
-                }
+                document.getElementById('openingCash').value = window.appData.openingCash;
+                document.getElementById('openingBank').value = window.appData.openingBank;
 
-                renderAllViews();
-                showToast(`已成功載入 ${monthYYYYMM} 資料`, 'success');
-            } catch (err) {
-                console.error("Firebase Load Error:", err);
-                showToast("載入雲端資料失敗: " + err.message, 'error');
-            }
+                renderAllTables();
+                updateSummaryAndCharts();
+                showSyncStatus('success', '雲端已同步');
+            }, (err) => {
+                console.error("Firestore Listen Error:", err);
+                showSyncStatus('error', '雲端同步異常');
+            });
         }
 
-        async function saveMonthDataToFirebase(monthYYYYMM, dataObj) {
-            if (!currentUser) return;
+        // Silent Cloud Auto Save
+        window.autoSyncData = function() {
+            collectFormData();
+            updateSummaryAndCharts();
 
-            const monthRef = ref(db, `hoa_financial/${monthYYYYMM}`);
-            const timestamp = new Date().toLocaleString('zh-TW', { hour12: false });
-            
+            showSyncStatus('saving', '自動儲存中...');
+
+            clearTimeout(syncDebounceTimer);
+            syncDebounceTimer = setTimeout(() => {
+                saveMonthDataToFirebase();
+            }, 600); // 600ms debounce
+        };
+
+        async function saveMonthDataToFirebase() {
+            if (!db || !currentUser) {
+                showSyncStatus('success', '本地運作中');
+                return;
+            }
+
+            const docId = `${window.currentYear}-${String(window.currentMonth).padStart(2, '0')}`;
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'monthly_records', docId);
+
             try {
-                await set(monthRef, dataObj);
-                document.getElementById('last-saved-time').innerText = timestamp;
-                allMonthsStore[monthYYYYMM] = dataObj;
-                showToast("資料已成功同步儲存至 Firebase", 'success');
+                await setDoc(docRef, {
+                    income: window.appData.income,
+                    guard: window.appData.guard,
+                    report: window.appData.report,
+                    openingCash: parseFloat(document.getElementById('openingCash').value) || 0,
+                    openingBank: parseFloat(document.getElementById('openingBank').value) || 0,
+                    updatedAt: new Date().toISOString()
+                });
+                
+                const now = new Date();
+                const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+                document.getElementById('lastSyncTime').textContent = `(最後更新 ${timeStr})`;
+                showSyncStatus('success', '已自動儲存');
             } catch (err) {
-                console.error("Firebase Save Error:", err);
-                showToast("儲存至雲端失敗: " + err.message, 'error');
+                console.error("Save error:", err);
+                showSyncStatus('error', '自動儲存失敗');
             }
         }
 
-        function renderAllViews() {
-            renderIncomeTable();
-            renderGuardTable();
-            renderFinancialTable();
-            renderChart1();
-            renderChart2();
+        function showSyncStatus(type, msg) {
+            const icon = document.getElementById('syncIcon');
+            const text = document.getElementById('syncText');
+
+            if (type === 'saving') {
+                icon.className = 'fa-solid fa-spinner animate-spin text-amber-300';
+                text.textContent = msg;
+            } else if (type === 'success') {
+                icon.className = 'fa-solid fa-cloud-check text-emerald-300';
+                text.textContent = msg;
+            } else if (type === 'loading') {
+                icon.className = 'fa-solid fa-cloud-arrow-down animate-bounce text-sky-200';
+                text.textContent = msg;
+            } else if (type === 'error') {
+                icon.className = 'fa-solid fa-circle-exclamation text-rose-300';
+                text.textContent = msg;
+            }
         }
 
-        // 1. 每月收入表 (含複製與刪除)
+        // Collect Table Data to State
+        function collectFormData() {
+            // Income
+            const incomeRows = document.querySelectorAll('#incomeTableBody tr');
+            window.appData.income = Array.from(incomeRows).map(tr => ({
+                date: tr.querySelector('.in-date')?.value || '',
+                payer: tr.querySelector('.in-payer')?.value || '',
+                type: tr.querySelector('.in-type')?.value || '管理費',
+                amount: parseFloat(tr.querySelector('.in-amount')?.value) || 0,
+                method: tr.querySelector('.in-method')?.value || '現金',
+                note: tr.querySelector('.in-note')?.value || ''
+            }));
+
+            // Guard
+            const guardRows = document.querySelectorAll('#guardTableBody tr');
+            window.appData.guard = Array.from(guardRows).map(tr => {
+                const dateInput = tr.querySelector('.gd-date');
+                let formattedDate = dateInput?.value || '';
+                if(formattedDate.includes('-')) {
+                    formattedDate = formattedDate.replace(/-/g, '');
+                }
+
+                return {
+                    date: formattedDate,
+                    name: tr.querySelector('.gd-name')?.value || '',
+                    hours: parseFloat(tr.querySelector('.gd-hours')?.value) || 0,
+                    rate: parseFloat(tr.querySelector('.gd-rate')?.value) || 0,
+                    note: tr.querySelector('.gd-note')?.value || ''
+                };
+            });
+
+            // Report
+            const reportRows = document.querySelectorAll('#reportTableBody tr');
+            window.appData.report = Array.from(reportRows).map(tr => ({
+                date: tr.querySelector('.rp-date')?.value || '',
+                category: tr.querySelector('.rp-category')?.value || '支出',
+                type: tr.querySelector('.rp-type')?.value || '公設維護',
+                title: tr.querySelector('.rp-title')?.value || '',
+                amount: parseFloat(tr.querySelector('.rp-amount')?.value) || 0,
+                method: tr.querySelector('.rp-method')?.value || '現金',
+                handler: tr.querySelector('.rp-handler')?.value || ''
+            }));
+
+            window.appData.openingCash = parseFloat(document.getElementById('openingCash').value) || 0;
+            window.appData.openingBank = parseFloat(document.getElementById('openingBank').value) || 0;
+        }
+
+        // Render Tables
+        function renderAllTables() {
+            renderIncomeTable();
+            renderGuardTable();
+            renderReportTable();
+        }
+
         function renderIncomeTable() {
-            const tbody = document.getElementById('income-tbody');
+            const tbody = document.getElementById('incomeTableBody');
             tbody.innerHTML = '';
-
-            let totalFee = 0, totalFlat = 0, totalMech = 0, totalPaid = 0;
-            currentMonthData.incomeRows.sort((a, b) => Number(a.id) - Number(b.id));
-
-            currentMonthData.incomeRows.forEach((row, idx) => {
-                const fee = Number(row.fee) || 0;
-                const flatPark = Number(row.flatPark) || 0;
-                const mechPark = Number(row.mechPark) || 0;
-                const paid = Number(row.paid) || 0;
-
-                totalFee += fee;
-                totalFlat += flatPark;
-                totalMech += mechPark;
-                totalPaid += paid;
-
-                const tr = document.createElement('tr');
-                tr.className = idx % 2 === 0 ? 'bg-white' : 'bg-sky-50/30';
-                tr.innerHTML = `
-                    <td class="p-2 text-center font-bold text-gray-500 border-r border-sky-100">${row.id}</td>
-                    <td class="p-2 border-r border-sky-100">
-                        <input type="text" class="table-input" value="${row.floor || ''}" readonly title="樓層無法編輯">
-                    </td>
-                    <td class="p-2 border-r border-sky-100">
-                        <input type="text" class="table-input" value="${row.name || ''}" onchange="updateIncomeRow(${idx}, 'name', this.value)">
-                    </td>
-                    <td class="p-2 border-r border-sky-100">
-                        <input type="number" class="table-input text-right font-mono" value="${fee}" onchange="updateIncomeRow(${idx}, 'fee', this.value)">
-                    </td>
-                    <td class="p-2 border-r border-sky-100">
-                        <input type="number" class="table-input text-right font-mono" value="${flatPark}" onchange="updateIncomeRow(${idx}, 'flatPark', this.value)">
-                    </td>
-                    <td class="p-2 border-r border-sky-100">
-                        <input type="number" class="table-input text-right font-mono" value="${mechPark}" onchange="updateIncomeRow(${idx}, 'mechPark', this.value)">
-                    </td>
-                    <td class="p-2 border-r border-sky-100">
-                        <input type="number" class="table-input text-right font-mono text-emerald-700 font-bold" value="${paid}" onchange="updateIncomeRow(${idx}, 'paid', this.value)">
-                    </td>
-                    <td class="p-2 border-r border-sky-100">
-                        <input type="text" class="table-input text-xs font-mono" value="${row.date || ''}" placeholder="YYYY/MM/DD" onchange="updateIncomeRow(${idx}, 'date', this.value)">
-                    </td>
-                    <td class="p-2 border-r border-sky-100">
-                        <input type="text" class="table-input" value="${row.remark || ''}" onchange="updateIncomeRow(${idx}, 'remark', this.value)">
-                    </td>
-                    <td class="p-2 text-center flex items-center justify-center gap-1">
-                        <button onclick="copyIncomeRow(${idx})" class="text-sky-600 hover:text-sky-800 p-1" title="複製此列"><i class="fa-solid fa-copy"></i></button>
-                        <button onclick="deleteIncomeRow(${idx})" class="text-rose-600 hover:text-rose-800 p-1" title="刪除此列"><i class="fa-solid fa-trash-can"></i></button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            const totalDue = totalFee + totalFlat + totalMech;
-            document.getElementById('total-income-fee').innerText = formatNTD(totalFee);
-            document.getElementById('total-income-flat').innerText = formatNTD(totalFlat);
-            document.getElementById('total-income-mech').innerText = formatNTD(totalMech);
-            document.getElementById('total-income-paid').innerText = formatNTD(totalPaid);
-            document.getElementById('total-income-due').innerText = formatNTD(totalDue);
-        }
-
-        window.updateIncomeRow = (idx, field, val) => {
-            currentMonthData.incomeRows[idx][field] = val;
-            renderIncomeTable();
-            renderChart1();
-        };
-
-        window.copyIncomeRow = (idx) => {
-            const target = currentMonthData.incomeRows[idx];
-            const nextId = Math.max(...currentMonthData.incomeRows.map(r => Number(r.id) || 0)) + 1;
-            const newRow = { ...target, id: nextId, name: target.name + ' (複製)' };
-            currentMonthData.incomeRows.splice(idx + 1, 0, newRow);
-            renderIncomeTable();
-            renderChart1();
-            showToast("已成功複製住戶收入列", 'success');
-        };
-
-        window.deleteIncomeRow = (idx) => {
-            currentMonthData.incomeRows.splice(idx, 1);
-            renderIncomeTable();
-            renderChart1();
-        };
-
-        document.getElementById('btn-add-income-row').addEventListener('click', () => {
-            const nextId = currentMonthData.incomeRows.length > 0 ? Math.max(...currentMonthData.incomeRows.map(r => Number(r.id) || 0)) + 1 : 1;
-            const floorInput = prompt("請輸入住戶樓層 (如: 5F-A):", `${nextId + 1}F-A`);
-            if (!floorInput) return;
-
-            currentMonthData.incomeRows.push({
-                id: nextId,
-                floor: floorInput,
-                name: '新住戶',
-                fee: 2000,
-                flatPark: 0,
-                mechPark: 0,
-                paid: 0,
-                date: '',
-                remark: ''
-            });
-            renderIncomeTable();
-            renderChart1();
-        });
-
-        // 2. 管理員時數表 (含日曆點選 YYYYMMDD 與 複製/刪除)
-        function renderGuardTable() {
-            const tbody = document.getElementById('guard-tbody');
-            tbody.innerHTML = '';
-
-            let totalXie = 0, totalZhou = 0, grandTotalHours = 0, grandTotalAmount = 0;
-
-            currentMonthData.guardRows.forEach((row, idx) => {
-                const xie = Number(row.xieHours) || 0;
-                const zhou = Number(row.zhouHours) || 0;
-                const sumHours = xie + zhou;
-                const sumAmount = sumHours * 196;
-
-                totalXie += xie;
-                totalZhou += zhou;
-                grandTotalHours += sumHours;
-                grandTotalAmount += sumAmount;
-
-                const dayWeek = getDayOfWeek(row.date);
-                const dateInputValue = formatYYYYMMDDToInput(row.date);
-
-                const tr = document.createElement('tr');
-                tr.className = idx % 2 === 0 ? 'bg-white' : 'bg-sky-50/30';
-                tr.innerHTML = `
-                    <td class="p-2 border-r border-sky-100">
-                        <input type="date" class="table-input font-mono font-bold text-xs" value="${dateInputValue}" onchange="updateGuardRow(${idx}, 'date', formatInputToYYYYMMDD(this.value))">
-                    </td>
-                    <td class="p-2 text-center border-r border-sky-100 font-extrabold text-sky-800">${dayWeek}</td>
-                    <td class="p-2 border-r border-sky-100">
-                        <input type="number" class="table-input text-right font-mono" value="${xie}" onchange="updateGuardRow(${idx}, 'xieHours', this.value)">
-                    </td>
-                    <td class="p-2 border-r border-sky-100">
-                        <input type="number" class="table-input text-right font-mono" value="${zhou}" onchange="updateGuardRow(${idx}, 'zhouHours', this.value)">
-                    </td>
-                    <td class="p-2 text-right font-mono font-black border-r border-sky-100 bg-sky-50 text-sky-950">${sumHours} h</td>
-                    <td class="p-2 text-right font-mono font-black border-r border-sky-100 bg-sky-50 text-sky-900">${formatNTD(sumAmount)}</td>
-                    <td class="p-2 border-r border-sky-100">
-                        <input type="text" class="table-input" value="${row.offTime || ''}" onchange="updateGuardRow(${idx}, 'offTime', this.value)">
-                    </td>
-                    <td class="p-2 border-r border-sky-100">
-                        <input type="text" class="table-input" value="${row.sign || ''}" onchange="updateGuardRow(${idx}, 'sign', this.value)">
-                    </td>
-                    <td class="p-2 border-r border-sky-100">
-                        <input type="text" class="table-input" value="${row.cleaner || ''}" onchange="updateGuardRow(${idx}, 'cleaner', this.value)">
-                    </td>
-                    <td class="p-2 text-center flex items-center justify-center gap-1">
-                        <button onclick="copyGuardRow(${idx})" class="text-sky-600 hover:text-sky-800 p-1" title="複製此列"><i class="fa-solid fa-copy"></i></button>
-                        <button onclick="deleteGuardRow(${idx})" class="text-rose-600 hover:text-rose-800 p-1" title="刪除此列"><i class="fa-solid fa-trash-can"></i></button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            document.getElementById('total-guard-xie').innerText = `${totalXie} hrs`;
-            document.getElementById('total-guard-zhou').innerText = `${totalZhou} hrs`;
-            document.getElementById('total-guard-hours').innerText = `${grandTotalHours} hrs`;
-            document.getElementById('total-guard-amount').innerText = formatNTD(grandTotalAmount);
-        }
-
-        window.updateGuardRow = (idx, field, val) => {
-            currentMonthData.guardRows[idx][field] = val;
-            renderGuardTable();
-        };
-
-        window.copyGuardRow = (idx) => {
-            const target = currentMonthData.guardRows[idx];
-            const newRow = { ...target };
-            currentMonthData.guardRows.splice(idx + 1, 0, newRow);
-            renderGuardTable();
-            showToast("已成功複製管理員時數列", 'success');
-        };
-
-        window.deleteGuardRow = (idx) => {
-            currentMonthData.guardRows.splice(idx, 1);
-            renderGuardTable();
-        };
-
-        document.getElementById('btn-add-guard-row').addEventListener('click', () => {
-            const yyyymm = getYYYYMM(currentMonth);
-            const count = currentMonthData.guardRows.length + 1;
-            const dayStr = count < 10 ? '0' + count : '' + count;
-
-            currentMonthData.guardRows.push({
-                date: `${yyyymm}${dayStr}`,
-                xieHours: 8,
-                zhouHours: 0,
-                offTime: '17:00',
-                sign: '謝',
-                cleaner: '阿姨'
-            });
-            renderGuardTable();
-        });
-
-        // 3. 收支月報表 (含期初金額、複製與刪除)
-        function renderFinancialTable() {
-            const tbody = document.getElementById('financial-tbody');
-            tbody.innerHTML = '';
-
-            document.getElementById('financial-header-title').value = currentMonthData.financialTitle || `中華新幹線大廈管理委員會 ${currentMonth.replace('-', '年')}月 收支明細表`;
-            document.getElementById('input-initial-cash').value = currentMonthData.initialCash ?? 50000;
-            document.getElementById('input-initial-account').value = currentMonthData.initialAccount ?? 200000;
-
-            let cashExpSum = 0, accExpSum = 0, cashIncSum = 0, accIncSum = 0;
-
-            currentMonthData.financialRows.forEach((row, idx) => {
-                const cExp = Number(row.cashExp) || 0;
-                const aExp = Number(row.accExp) || 0;
-                const cInc = Number(row.cashInc) || 0;
-                const aInc = Number(row.accInc) || 0;
-
-                cashExpSum += cExp;
-                accExpSum += aExp;
-                cashIncSum += cInc;
-                accIncSum += aInc;
-
-                const tr = document.createElement('tr');
-                tr.className = idx % 2 === 0 ? 'bg-white' : 'bg-sky-50/30';
-                tr.innerHTML = `
-                    <td class="p-2 border-r border-sky-100">
-                        <input type="text" class="table-input font-bold" value="${row.desc || ''}" onchange="updateFinancialRow(${idx}, 'desc', this.value)">
-                    </td>
-                    <td class="p-2 border-r border-sky-100 bg-rose-50/40">
-                        <input type="number" class="table-input text-right font-mono text-rose-700 font-bold" value="${cExp}" onchange="updateFinancialRow(${idx}, 'cashExp', this.value)">
-                    </td>
-                    <td class="p-2 border-r border-sky-100 bg-rose-50/40">
-                        <input type="number" class="table-input text-right font-mono text-rose-700 font-bold" value="${aExp}" onchange="updateFinancialRow(${idx}, 'accExp', this.value)">
-                    </td>
-                    <td class="p-2 border-r border-sky-100 bg-emerald-50/40">
-                        <input type="number" class="table-input text-right font-mono text-emerald-700 font-bold" value="${cInc}" onchange="updateFinancialRow(${idx}, 'cashInc', this.value)">
-                    </td>
-                    <td class="p-2 border-r border-sky-100 bg-emerald-50/40">
-                        <input type="number" class="table-input text-right font-mono text-emerald-700 font-bold" value="${aInc}" onchange="updateFinancialRow(${idx}, 'accInc', this.value)">
-                    </td>
-                    <td class="p-2 border-r border-sky-100">
-                        <input type="text" class="table-input" value="${row.remark || ''}" onchange="updateFinancialRow(${idx}, 'remark', this.value)">
-                    </td>
-                    <td class="p-2 text-center flex items-center justify-center gap-1">
-                        <button onclick="copyFinancialRow(${idx})" class="text-sky-600 hover:text-sky-800 p-1" title="複製此列"><i class="fa-solid fa-copy"></i></button>
-                        <button onclick="deleteFinancialRow(${idx})" class="text-rose-600 hover:text-rose-800 p-1" title="刪除此列"><i class="fa-solid fa-trash-can"></i></button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            document.getElementById('fin-total-cash-exp').innerText = formatNTD(cashExpSum);
-            document.getElementById('fin-total-acc-exp').innerText = formatNTD(accExpSum);
-            document.getElementById('fin-total-cash-inc').innerText = formatNTD(cashIncSum);
-            document.getElementById('fin-total-acc-inc').innerText = formatNTD(accIncSum);
-
-            // Summary Cards Calculations with Initial Balance
-            const grandTotalInc = cashIncSum + accIncSum;
-            const grandTotalExp = cashExpSum + accExpSum;
-            const netBalance = grandTotalInc - grandTotalExp;
-
-            const initCash = Number(currentMonthData.initialCash) || 0;
-            const initAcc = Number(currentMonthData.initialAccount) || 0;
-
-            const totalCashNet = initCash + cashIncSum - cashExpSum;
-            const totalAccountNet = initAcc + accIncSum - accExpSum;
-
-            document.getElementById('card-total-income').innerText = formatNTD(grandTotalInc);
-            document.getElementById('card-total-expense').innerText = formatNTD(grandTotalExp);
-            document.getElementById('card-net-balance').innerText = formatNTD(netBalance);
-            document.getElementById('card-cash-net').innerText = formatNTD(totalCashNet);
-            document.getElementById('card-account-net').innerText = formatNTD(totalAccountNet);
-        }
-
-        window.updateFinancialRow = (idx, field, val) => {
-            currentMonthData.financialRows[idx][field] = val;
-            renderFinancialTable();
-            renderChart2();
-        };
-
-        window.copyFinancialRow = (idx) => {
-            const target = currentMonthData.financialRows[idx];
-            const newRow = { ...target, desc: target.desc + ' (複製)' };
-            currentMonthData.financialRows.splice(idx + 1, 0, newRow);
-            renderFinancialTable();
-            renderChart2();
-            showToast("已成功複製收支項目列", 'success');
-        };
-
-        window.deleteFinancialRow = (idx) => {
-            currentMonthData.financialRows.splice(idx, 1);
-            renderFinancialTable();
-            renderChart2();
-        };
-
-        window.updateInitialBalance = (type, val) => {
-            if (type === 'cash') {
-                currentMonthData.initialCash = Number(val) || 0;
-            } else if (type === 'account') {
-                currentMonthData.initialAccount = Number(val) || 0;
+            
+            if (!window.appData.income || window.appData.income.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">目前尚無收入紀錄，點選右上角按鈕新增</td></tr>`;
+                return;
             }
-            renderFinancialTable();
-            renderChart2();
+
+            window.appData.income.forEach((item, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-sky-50/50 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-4 py-2 text-center font-bold text-sky-800">${idx + 1}</td>
+                    <td class="px-4 py-2"><input type="text" value="${item.date || ''}" onchange="autoSyncData()" class="in-date input-vibrant w-full px-2.5 py-1 rounded text-xs"></td>
+                    <td class="px-4 py-2"><input type="text" value="${item.payer || ''}" onchange="autoSyncData()" class="in-payer input-vibrant w-full px-2.5 py-1 rounded text-xs font-semibold"></td>
+                    <td class="px-4 py-2">
+                        <select onchange="autoSyncData()" class="in-type input-vibrant w-full px-2.5 py-1 rounded text-xs">
+                            <option value="管理費" ${item.type==='管理費'?'selected':''}>管理費</option>
+                            <option value="車位租金" ${item.type==='車位租金'?'selected':''}>車位租金</option>
+                            <option value="清潔費" ${item.type==='清潔費'?'selected':''}>清潔費</option>
+                            <option value="公設使用費" ${item.type==='公設使用費'?'selected':''}>公設使用費</option>
+                            <option value="其他雜收" ${item.type==='其他雜收'?'selected':''}>其他雜收</option>
+                        </select>
+                    </td>
+                    <td class="px-4 py-2"><input type="number" value="${item.amount || 0}" onchange="autoSyncData()" class="in-amount input-vibrant w-full px-2.5 py-1 rounded text-xs text-right font-bold text-emerald-600"></td>
+                    <td class="px-4 py-2">
+                        <select onchange="autoSyncData()" class="in-method input-vibrant w-full px-2.5 py-1 rounded text-xs">
+                            <option value="現金" ${item.method==='現金'?'selected':''}>現金</option>
+                            <option value="銀行轉帳" ${item.method==='銀行轉帳'?'selected':''}>銀行轉帳</option>
+                        </select>
+                    </td>
+                    <td class="px-4 py-2"><input type="text" value="${item.note || ''}" onchange="autoSyncData()" class="in-note input-vibrant w-full px-2.5 py-1 rounded text-xs"></td>
+                    <td class="px-4 py-2 text-center">
+                        <div class="flex items-center justify-center space-x-1">
+                            <button onclick="duplicateRow('income', ${idx})" title="複製列" class="p-1.5 text-sky-600 hover:bg-sky-100 rounded-lg transition"><i class="fa-solid fa-copy"></i></button>
+                            <button onclick="deleteRow('income', ${idx})" title="刪除列" class="p-1.5 text-rose-500 hover:bg-rose-100 rounded-lg transition"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderGuardTable() {
+            const tbody = document.getElementById('guardTableBody');
+            tbody.innerHTML = '';
+
+            if (!window.appData.guard || window.appData.guard.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">目前尚無管理員時數紀錄，點選右上角按鈕新增</td></tr>`;
+                return;
+            }
+
+            window.appData.guard.forEach((item, idx) => {
+                let displayDate = item.date || '';
+                let pickerDate = '';
+                if(displayDate.length === 8) {
+                    pickerDate = `${displayDate.substring(0,4)}-${displayDate.substring(4,6)}-${displayDate.substring(6,8)}`;
+                }
+
+                const subtotal = (item.hours || 0) * (item.rate || 0);
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-teal-50/50 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-4 py-2 text-center font-bold text-teal-800">${idx + 1}</td>
+                    <td class="px-4 py-2">
+                        <div class="flex flex-col gap-1">
+                            <input type="date" value="${pickerDate}" onchange="onGuardDatePick(this, ${idx})" class="input-vibrant px-2 py-1 rounded text-xs">
+                            <span class="text-[10px] text-slate-400 font-mono">YMD: ${displayDate || '未設定'}</span>
+                        </div>
+                    </td>
+                    <td class="px-4 py-2"><input type="text" value="${item.name || ''}" onchange="autoSyncData()" class="gd-name input-vibrant w-full px-2.5 py-1 rounded text-xs font-semibold"></td>
+                    <td class="px-4 py-2"><input type="number" step="0.5" value="${item.hours || 0}" onchange="autoSyncData()" class="gd-hours input-vibrant w-full px-2.5 py-1 rounded text-xs text-right font-bold text-sky-700"></td>
+                    <td class="px-4 py-2"><input type="number" value="${item.rate || 0}" onchange="autoSyncData()" class="gd-rate input-vibrant w-full px-2.5 py-1 rounded text-xs text-right"></td>
+                    <td class="px-4 py-2 text-right font-extrabold text-emerald-600">NT$ ${subtotal.toLocaleString()}</td>
+                    <td class="px-4 py-2"><input type="text" value="${item.note || ''}" onchange="autoSyncData()" class="gd-note input-vibrant w-full px-2.5 py-1 rounded text-xs"></td>
+                    <td class="px-4 py-2 text-center">
+                        <div class="flex items-center justify-center space-x-1">
+                            <button onclick="duplicateRow('guard', ${idx})" title="複製列" class="p-1.5 text-teal-600 hover:bg-teal-100 rounded-lg transition"><i class="fa-solid fa-copy"></i></button>
+                            <button onclick="deleteRow('guard', ${idx})" title="刪除列" class="p-1.5 text-rose-500 hover:bg-rose-100 rounded-lg transition"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        window.onGuardDatePick = function(inputEl, idx) {
+            const rawVal = inputEl.value; // YYYY-MM-DD
+            if (rawVal) {
+                const ymd = rawVal.replace(/-/g, '');
+                window.appData.guard[idx].date = ymd;
+            }
+            autoSyncData();
+            renderGuardTable();
         };
 
-        document.getElementById('btn-add-financial-row').addEventListener('click', () => {
-            currentMonthData.financialRows.push({
-                desc: '新維護支出/收入項目',
-                cashExp: 0,
-                accExp: 0,
-                cashInc: 0,
-                accInc: 0,
-                remark: ''
-            });
-            renderFinancialTable();
-            renderChart2();
-        });
+        function renderReportTable() {
+            const tbody = document.getElementById('reportTableBody');
+            tbody.innerHTML = '';
 
-        document.getElementById('financial-header-title').addEventListener('change', (e) => {
-            currentMonthData.financialTitle = e.target.value;
-        });
+            if (!window.appData.report || window.appData.report.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-400">目前尚無收支明細，點選右上角按鈕新增</td></tr>`;
+                return;
+            }
 
-        // 4. 分析圖表 1 (繳費狀態)
-        function renderChart1() {
-            let paidCount = 0, unpaidCount = 0;
-            let totalPaidAmount = 0, totalUnpaidAmount = 0;
-
-            const paidListEl = document.getElementById('chart1-paid-list');
-            const unpaidListEl = document.getElementById('chart1-unpaid-list');
-            paidListEl.innerHTML = '';
-            unpaidListEl.innerHTML = '';
-
-            currentMonthData.incomeRows.forEach(row => {
-                const requiredTotal = (Number(row.fee) || 0) + (Number(row.flatPark) || 0) + (Number(row.mechPark) || 0);
-                const actualPaid = Number(row.paid) || 0;
-                const diff = actualPaid - requiredTotal;
-
-                if (actualPaid >= requiredTotal && requiredTotal > 0) {
-                    paidCount++;
-                    totalPaidAmount += actualPaid;
-
-                    const item = document.createElement('div');
-                    item.className = "p-2 bg-white rounded border border-emerald-200 flex items-center justify-between shadow-sm";
-                    item.innerHTML = `
-                        <span>${row.floor} ${row.name}</span>
-                        <span class="text-emerald-700 font-mono font-extrabold">${formatNTD(actualPaid)}</span>
-                    `;
-                    paidListEl.appendChild(item);
-                } else {
-                    unpaidCount++;
-                    totalPaidAmount += actualPaid;
-                    totalUnpaidAmount += Math.abs(diff);
-
-                    const item = document.createElement('div');
-                    item.className = "p-2 bg-white rounded border border-rose-200 flex items-center justify-between shadow-sm";
-                    item.innerHTML = `
-                        <div>
-                            <div>${row.floor} ${row.name}</div>
-                            <div class="text-[10px] text-gray-500 font-normal">應繳: ${formatNum(requiredTotal)} | 已繳: ${formatNum(actualPaid)}</div>
+            window.appData.report.forEach((item, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-sky-50/50 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-4 py-2 text-center font-bold text-sky-800">${idx + 1}</td>
+                    <td class="px-4 py-2"><input type="text" value="${item.date || ''}" onchange="autoSyncData()" class="rp-date input-vibrant w-full px-2.5 py-1 rounded text-xs"></td>
+                    <td class="px-4 py-2">
+                        <select onchange="autoSyncData()" class="rp-category input-vibrant w-full px-2.5 py-1 rounded text-xs font-bold ${item.category==='收入'?'text-emerald-600':'text-rose-600'}">
+                            <option value="支出" ${item.category==='支出'?'selected':''}>支出</option>
+                            <option value="收入" ${item.category==='收入'?'selected':''}>收入</option>
+                        </select>
+                    </td>
+                    <td class="px-4 py-2">
+                        <select onchange="autoSyncData()" class="rp-type input-vibrant w-full px-2.5 py-1 rounded text-xs">
+                            <option value="公設維護" ${item.type==='公設維護'?'selected':''}>公設維護</option>
+                            <option value="水電費用" ${item.type==='水電費用'?'selected':''}>水電費用</option>
+                            <option value="管理員津貼" ${item.type==='管理員津貼'?'selected':''}>管理員津貼</option>
+                            <option value="清潔服務費" ${item.type==='清潔服務費'?'selected':''}>清潔服務費</option>
+                            <option value="行政行政費" ${item.type==='行政行政費'?'selected':''}>行政行政費</option>
+                            <option value="社區活動" ${item.type==='社區活動'?'selected':''}>社區活動</option>
+                            <option value="管理費收入" ${item.type==='管理費收入'?'selected':''}>管理費收入</option>
+                            <option value="其他雜項" ${item.type==='其他雜項'?'selected':''}>其他雜項</option>
+                        </select>
+                    </td>
+                    <td class="px-4 py-2"><input type="text" value="${item.title || ''}" onchange="autoSyncData()" class="rp-title input-vibrant w-full px-2.5 py-1 rounded text-xs font-semibold"></td>
+                    <td class="px-4 py-2"><input type="number" value="${item.amount || 0}" onchange="autoSyncData()" class="rp-amount input-vibrant w-full px-2.5 py-1 rounded text-xs text-right font-extrabold ${item.category==='收入'?'text-emerald-600':'text-rose-600'}"></td>
+                    <td class="px-4 py-2">
+                        <select onchange="autoSyncData()" class="rp-method input-vibrant w-full px-2.5 py-1 rounded text-xs">
+                            <option value="現金" ${item.method==='現金'?'selected':''}>現金</option>
+                            <option value="銀行轉帳" ${item.method==='銀行轉帳'?'selected':''}>銀行轉帳</option>
+                        </select>
+                    </td>
+                    <td class="px-4 py-2"><input type="text" value="${item.handler || ''}" onchange="autoSyncData()" class="rp-handler input-vibrant w-full px-2.5 py-1 rounded text-xs"></td>
+                    <td class="px-4 py-2 text-center">
+                        <div class="flex items-center justify-center space-x-1">
+                            <button onclick="duplicateRow('report', ${idx})" title="複製列" class="p-1.5 text-sky-600 hover:bg-sky-100 rounded-lg transition"><i class="fa-solid fa-copy"></i></button>
+                            <button onclick="deleteRow('report', ${idx})" title="刪除列" class="p-1.5 text-rose-500 hover:bg-rose-100 rounded-lg transition"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
-                        <span class="text-rose-700 font-mono font-extrabold">差額 ${formatNTD(diff)}</span>
-                    `;
-                    unpaidListEl.appendChild(item);
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Table Row Actions
+        window.addRow = function(tableBodyId) {
+            collectFormData();
+            const todayStr = `${window.currentYear}/${String(window.currentMonth).padStart(2,'0')}/01`;
+
+            if (tableBodyId === 'incomeTableBody') {
+                window.appData.income.push({ date: todayStr, payer: '新門牌', type: '管理費', amount: 0, method: '現金', note: '' });
+            } else if (tableBodyId === 'guardTableBody') {
+                const ymd = `${window.currentYear}${String(window.currentMonth).padStart(2,'0')}01`;
+                window.appData.guard.push({ date: ymd, name: '管理員', hours: 8, rate: 200, note: '' });
+            } else if (tableBodyId === 'reportTableBody') {
+                window.appData.report.push({ date: todayStr, category: '支出', type: '公設維護', title: '維修項目', amount: 0, method: '現金', handler: '主委' });
+            }
+            
+            renderAllTables();
+            autoSyncData();
+            showToast('已新增一筆紀錄', 'info');
+        };
+
+        window.duplicateRow = function(type, idx) {
+            collectFormData();
+            if (type === 'income') {
+                const item = { ...window.appData.income[idx] };
+                window.appData.income.splice(idx + 1, 0, item);
+            } else if (type === 'guard') {
+                const item = { ...window.appData.guard[idx] };
+                window.appData.guard.splice(idx + 1, 0, item);
+            } else if (type === 'report') {
+                const item = { ...window.appData.report[idx] };
+                window.appData.report.splice(idx + 1, 0, item);
+            }
+            renderAllTables();
+            autoSyncData();
+            showToast('已複製選取列', 'success');
+        };
+
+        window.deleteRow = function(type, idx) {
+            collectFormData();
+            if (type === 'income') {
+                window.appData.income.splice(idx, 1);
+            } else if (type === 'guard') {
+                window.appData.guard.splice(idx, 1);
+            } else if (type === 'report') {
+                window.appData.report.splice(idx, 1);
+            }
+            renderAllTables();
+            autoSyncData();
+            showToast('已刪除紀錄', 'warning');
+        };
+
+        // Calculations & Charts Update
+        function updateSummaryAndCharts() {
+            let totalIncome = 0;
+            let totalExpense = 0;
+            let cashChange = 0;
+            let bankChange = 0;
+
+            // Income Table Total
+            const incomeSum = window.appData.income.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
+            const incomeSumEl = document.getElementById('incomeTotalSum');
+            if(incomeSumEl) incomeSumEl.textContent = `NT$ ${incomeSum.toLocaleString()}`;
+
+            // Guard Table Total
+            let guardHoursSum = 0;
+            let guardAmountSum = 0;
+            window.appData.guard.forEach(g => {
+                const h = parseFloat(g.hours) || 0;
+                const r = parseFloat(g.rate) || 0;
+                guardHoursSum += h;
+                guardAmountSum += (h * r);
+            });
+            const guardTotalHoursEl = document.getElementById('guardTotalHours');
+            const guardTotalAmountEl = document.getElementById('guardTotalAmount');
+            if(guardTotalHoursEl) guardTotalHoursEl.textContent = `${guardHoursSum} 小時`;
+            if(guardTotalAmountEl) guardTotalAmountEl.textContent = `NT$ ${guardAmountSum.toLocaleString()}`;
+
+            // Report Table Breakdown
+            window.appData.report.forEach(r => {
+                const amt = parseFloat(r.amount) || 0;
+                if (r.category === '收入') {
+                    totalIncome += amt;
+                    if (r.method === '現金') cashChange += amt;
+                    else bankChange += amt;
+                } else {
+                    totalExpense += amt;
+                    if (r.method === '現金') cashChange -= amt;
+                    else bankChange -= amt;
                 }
             });
 
-            document.getElementById('chart1-paid-count').innerText = `${paidCount} 戶`;
-            document.getElementById('chart1-unpaid-count').innerText = `${unpaidCount} 戶`;
-            document.getElementById('chart1-paid-amount').innerText = formatNTD(totalPaidAmount);
-            document.getElementById('chart1-unpaid-amount').innerText = `- ${formatNTD(totalUnpaidAmount)}`;
+            const openingCash = parseFloat(document.getElementById('openingCash').value) || 0;
+            const openingBank = parseFloat(document.getElementById('openingBank').value) || 0;
 
-            document.getElementById('badge-paid-num').innerText = paidCount;
-            document.getElementById('badge-unpaid-num').innerText = unpaidCount;
+            const finalCash = openingCash + cashChange;
+            const finalBank = openingBank + bankChange;
 
-            const ctx = document.getElementById('chart1-canvas').getContext('2d');
-            if (chartInstance1) chartInstance1.destroy();
+            document.getElementById('summaryIncome').textContent = `NT$ ${totalIncome.toLocaleString()}`;
+            document.getElementById('summaryExpense').textContent = `NT$ ${totalExpense.toLocaleString()}`;
+            document.getElementById('summaryCashBalance').textContent = `NT$ ${finalCash.toLocaleString()}`;
+            document.getElementById('summaryBankBalance').textContent = `NT$ ${finalBank.toLocaleString()}`;
 
-            chartInstance1 = new Chart(ctx, {
+            renderCharts(openingCash, openingBank);
+        }
+
+        // Render Chart.js
+        function renderCharts(openingCash, openingBank) {
+            // Chart 1: Category Breakdown
+            const categoryMap = {};
+            window.appData.report.forEach(r => {
+                const key = `${r.category}-${r.type}`;
+                categoryMap[key] = (categoryMap[key] || 0) + (parseFloat(r.amount) || 0);
+            });
+
+            const labels = Object.keys(categoryMap);
+            const dataVals = Object.values(categoryMap);
+
+            const ctx1 = document.getElementById('chartIncomeExpense').getContext('2d');
+            if (chart1Instance) chart1Instance.destroy();
+
+            chart1Instance = new Chart(ctx1, {
                 type: 'doughnut',
                 data: {
-                    labels: ['已繳費總額 (+)', '欠繳未繳總額 (-)'],
+                    labels: labels.length ? labels : ['無資料'],
                     datasets: [{
-                        data: [totalPaidAmount, totalUnpaidAmount],
-                        backgroundColor: ['#10b981', '#f43f5e'],
+                        data: dataVals.length ? dataVals : [1],
+                        backgroundColor: [
+                            '#0284c7', '#14b8a6', '#f59e0b', '#ec4899', 
+                            '#8b5cf6', '#10b981', '#6366f1', '#f43f5e'
+                        ],
                         borderWidth: 2,
                         borderColor: '#ffffff'
                     }]
@@ -1124,92 +916,66 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'bottom', labels: { font: { weight: 'bold', size: 12 } } },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return ` ${context.label}: NT$ ${context.raw.toLocaleString()}`;
-                                }
-                            }
-                        }
+                        legend: { position: 'bottom' }
                     }
                 }
             });
-        }
 
-        // 5. 分析圖表 2 (累積趨勢，以初期現金+帳戶作為起點)
-        function renderChart2() {
-            const months = Object.keys(allMonthsStore).sort();
-            if (months.length === 0) months.push(getYYYYMM(currentMonth));
+            // Chart 2: Cumulative Cash & Bank Trend
+            let runningCash = openingCash;
+            let runningBank = openingBank;
 
-            const labels = [];
-            const cumulativeIncomes = [];
-            const cumulativeExpenses = [];
-            const cumulativeBalances = [];
+            const daysInMonth = new Date(window.currentYear, window.currentMonth, 0).getDate();
+            const dayLabels = Array.from({length: daysInMonth}, (_, i) => `${i + 1}日`);
+            const cashTrend = [];
+            const bankTrend = [];
 
-            // Get initial starting pool from current or first month store
-            let firstMonthKey = months[0];
-            let firstData = allMonthsStore[firstMonthKey] || currentMonthData;
-            let baseInitial = (Number(firstData.initialCash) || 50000) + (Number(firstData.initialAccount) || 200000);
+            for (let day = 1; day <= daysInMonth; day++) {
+                // aggregate changes up to this day
+                window.appData.report.forEach(r => {
+                    let rDay = 1;
+                    if(r.date) {
+                        const parts = r.date.split('/');
+                        if(parts.length === 3) rDay = parseInt(parts[2]);
+                    }
+                    if (rDay === day) {
+                        const amt = parseFloat(r.amount) || 0;
+                        if (r.category === '收入') {
+                            if (r.method === '現金') runningCash += amt;
+                            else runningBank += amt;
+                        } else {
+                            if (r.method === '現金') runningCash -= amt;
+                            else runningBank -= amt;
+                        }
+                    }
+                });
+                cashTrend.push(runningCash);
+                bankTrend.push(runningBank);
+            }
 
-            let runningIncome = baseInitial;
-            let runningExpense = 0;
+            const ctx2 = document.getElementById('chartTrend').getContext('2d');
+            if (chart2Instance) chart2Instance.destroy();
 
-            months.forEach(m => {
-                labels.push(`${m.substring(0, 4)}/${m.substring(4, 6)}`);
-                const mData = allMonthsStore[m] || generateDemoDataForMonth(m);
-
-                let mInc = 0;
-                let mExp = 0;
-
-                if (mData.financialRows) {
-                    mData.financialRows.forEach(r => {
-                        mInc += (Number(r.cashInc) || 0) + (Number(r.accInc) || 0);
-                        mExp += (Number(r.cashExp) || 0) + (Number(r.accExp) || 0);
-                    });
-                }
-
-                runningIncome += mInc;
-                runningExpense += mExp;
-
-                cumulativeIncomes.push(runningIncome);
-                cumulativeExpenses.push(runningExpense);
-                cumulativeBalances.push(runningIncome - runningExpense);
-            });
-
-            const ctx = document.getElementById('chart2-canvas').getContext('2d');
-            if (chartInstance2) chartInstance2.destroy();
-
-            chartInstance2 = new Chart(ctx, {
+            chart2Instance = new Chart(ctx2, {
                 type: 'line',
                 data: {
-                    labels: labels,
+                    labels: dayLabels,
                     datasets: [
                         {
-                            label: '含期初基準之累積總收入 (+)',
-                            data: cumulativeIncomes,
+                            label: '現金累積結餘',
+                            data: cashTrend,
                             borderColor: '#0284c7',
                             backgroundColor: 'rgba(2, 132, 199, 0.1)',
                             fill: true,
-                            tension: 0.3,
-                            borderWidth: 3
+                            tension: 0.3
                         },
                         {
-                            label: '逐月累積總支出 (-)',
-                            data: cumulativeExpenses,
-                            borderColor: '#f43f5e',
-                            backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                            label: '帳戶累積結餘',
+                            data: bankTrend,
+                            borderColor: '#14b8a6',
+                            backgroundColor: 'rgba(20, 184, 166, 0.1)',
                             fill: true,
-                            tension: 0.3,
-                            borderWidth: 3
-                        },
-                        {
-                            label: '逐月淨結餘水位',
-                            data: cumulativeBalances,
-                            borderColor: '#10b981',
-                            backgroundColor: '#10b981',
-                            borderWidth: 3,
-                            pointRadius: 5
+                            tension: 0.3
                         }
                     ]
                 },
@@ -1217,253 +983,200 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'top', labels: { font: { weight: 'bold', size: 12 } } },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return ` ${context.dataset.label}: NT$ ${context.raw.toLocaleString()}`;
-                                }
-                            }
-                        }
+                        legend: { position: 'top' }
                     },
                     scales: {
-                        y: {
-                            ticks: {
-                                callback: function(value) {
-                                    return 'NT$ ' + value.toLocaleString();
-                                },
-                                font: { weight: 'bold' }
-                            }
-                        },
-                        x: {
-                            ticks: { font: { weight: 'bold' } }
-                        }
+                        y: { beginAtZero: false }
                     }
                 }
             });
         }
 
-        document.getElementById('btn-export-chart1-png').addEventListener('click', () => {
+        // Download Chart PNG
+        window.downloadChartPNG = function(canvasId, fileName) {
+            const canvas = document.getElementById(canvasId);
+            const imageURI = canvas.toDataURL('image/png');
             const link = document.createElement('a');
-            link.download = `分析圖表1_住戶繳費狀態_${getYYYYMM(currentMonth)}.png`;
-            link.href = chartInstance1.toBase64Image();
+            link.download = fileName;
+            link.href = imageURI;
+            document.body.appendChild(link);
             link.click();
-            showToast("分析圖表1 高畫質 PNG 已成功匯出", 'success');
-        });
+            document.body.removeChild(link);
+            showToast('已匯出圖表 PNG', 'success');
+        };
 
-        document.getElementById('btn-export-chart2-png').addEventListener('click', () => {
-            const link = document.createElement('a');
-            link.download = `分析圖表2_逐月累積金額趨勢_${getYYYYMM(currentMonth)}.png`;
-            link.href = chartInstance2.toBase64Image();
-            link.click();
-            showToast("分析圖表2 高畫質 PNG 已成功匯出", 'success');
-        });
+        // Excel Export / Import using SheetJS
+        window.exportToExcel = function() {
+            collectFormData();
 
-        document.getElementById('btn-export-excel').addEventListener('click', () => {
-            const sheetCode = getYYYYMM(currentMonth);
             const wb = XLSX.utils.book_new();
 
-            const incomeData = [
-                ['編號', '樓層', '住戶姓名', '月費', '平面車位', '機械車位', '已繳金額', '匯款日', '備註']
+            // Income Sheet
+            const incomeData = window.appData.income.map(i => ({
+                '收費日期': i.date,
+                '門牌/繳款人': i.payer,
+                '收入類別': i.type,
+                '金額': i.amount,
+                '收款方式': i.method,
+                '備註': i.note
+            }));
+            const wsIncome = XLSX.utils.json_to_sheet(incomeData);
+            XLSX.utils.book_append_sheet(wb, wsIncome, "每月收入表");
+
+            // Guard Sheet
+            const guardData = window.appData.guard.map(g => ({
+                '值勤日期': g.date,
+                '管理員姓名': g.name,
+                '值勤時數': g.hours,
+                '時薪津貼': g.rate,
+                '小計金額': (g.hours || 0) * (g.rate || 0),
+                '工作備註': g.note
+            }));
+            const wsGuard = XLSX.utils.json_to_sheet(guardData);
+            XLSX.utils.book_append_sheet(wb, wsGuard, "管理員時數表");
+
+            // Report Sheet (Includes Opening Balances)
+            const reportData = [
+                { '日期': '期初金額設定', '收支類型': '期初現金', '科目類別': '-', '摘要/說明': '期初現金', '金額': window.appData.openingCash, '支付方式': '現金', '經手人': '-' },
+                { '日期': '期初金額設定', '收支類型': '期初帳戶', '科目類別': '-', '摘要/說明': '期初帳戶', '金額': window.appData.openingBank, '支付方式': '銀行轉帳', '經手人': '-' },
+                ...window.appData.report.map(r => ({
+                    '日期': r.date,
+                    '收支類型': r.category,
+                    '科目類別': r.type,
+                    '摘要/說明': r.title,
+                    '金額': r.amount,
+                    '支付方式': r.method,
+                    '經手人': r.handler
+                }))
             ];
-            currentMonthData.incomeRows.forEach(r => {
-                incomeData.push([r.id, r.floor, r.name, Number(r.fee)||0, Number(r.flatPark)||0, Number(r.mechPark)||0, Number(r.paid)||0, r.date||'', r.remark||'']);
-            });
-            const wsIncome = XLSX.utils.aoa_to_sheet(incomeData);
+            const wsReport = XLSX.utils.json_to_sheet(reportData);
+            XLSX.utils.book_append_sheet(wb, wsReport, "收支月報表");
 
-            const guardData = [
-                ['日期', '星期', '謝OO時數', '周OO時數', '總時數', '總金額', '下班時間', '簽名', '清潔人員']
-            ];
-            currentMonthData.guardRows.forEach(r => {
-                const totalH = (Number(r.xieHours)||0) + (Number(r.zhouHours)||0);
-                guardData.push([r.date, getDayOfWeek(r.date), Number(r.xieHours)||0, Number(r.zhouHours)||0, totalH, totalH*196, r.offTime||'', r.sign||'', r.cleaner||'']);
-            });
-            const wsGuard = XLSX.utils.aoa_to_sheet(guardData);
+            const fileName = `中華新幹線大廈_${window.currentYear}年${window.currentMonth}月_財務報表.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            showToast('成功匯出 Excel 報表！', 'success');
+        };
 
-            const finData = [
-                [currentMonthData.financialTitle || '收支明細表'],
-                [`期初現金: ${currentMonthData.initialCash || 0}`, `期初帳戶: ${currentMonthData.initialAccount || 0}`],
-                ['項目說明', '現金支出', '帳戶支出', '現金收入', '帳戶收入', '備註']
-            ];
-            currentMonthData.financialRows.forEach(r => {
-                finData.push([r.desc, Number(r.cashExp)||0, Number(r.accExp)||0, Number(r.cashInc)||0, Number(r.accInc)||0, r.remark||'']);
-            });
-            const wsFin = XLSX.utils.aoa_to_sheet(finData);
-
-            XLSX.utils.book_append_sheet(wb, wsIncome, `${sheetCode}_收入`);
-            XLSX.utils.book_append_sheet(wb, wsGuard, `${sheetCode}_時數`);
-            XLSX.utils.book_append_sheet(wb, wsFin, `${sheetCode}_收支`);
-
-            XLSX.writeFile(wb, `中華新幹線大廈財務表_${sheetCode}.xlsx`);
-            showToast(`成功匯出 ${sheetCode} 財務 Excel 報表`, 'success');
-        });
-
-        document.getElementById('excel-import-input').addEventListener('change', (e) => {
-            const file = e.target.files[0];
+        window.importFromExcel = function(event) {
+            const file = event.target.files[0];
             if (!file) return;
 
-            const targetSheetCode = getYYYYMM(currentMonth);
             const reader = new FileReader();
-
-            reader.onload = (evt) => {
+            reader.onload = function(e) {
                 try {
-                    const data = new Uint8Array(evt.target.result);
+                    const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
-                    const validSheetNames = workbook.SheetNames.filter(name => name.includes(targetSheetCode));
 
-                    if (validSheetNames.length === 0) {
-                        alert(`【匯入失敗】工作表名稱強制必須包含 YYYYMM (如: ${targetSheetCode}) 才可匯入！`);
-                        return;
+                    // Read Income Sheet
+                    if (workbook.SheetNames.includes("每月收入表")) {
+                        const ws = workbook.Sheets["每月收入表"];
+                        const json = XLSX.utils.sheet_to_json(ws);
+                        window.appData.income = json.map(r => ({
+                            date: r['收費日期'] || '',
+                            payer: r['門牌/繳款人'] || '',
+                            type: r['收入類別'] || '管理費',
+                            amount: parseFloat(r['金額']) || 0,
+                            method: r['收款方式'] || '現金',
+                            note: r['備註'] || ''
+                        }));
                     }
 
-                    if (!confirm(`確定要完全覆蓋當前 (${targetSheetCode}) 的財務資料嗎？`)) return;
+                    // Read Guard Sheet
+                    if (workbook.SheetNames.includes("管理員時數表")) {
+                        const ws = workbook.Sheets["管理員時數表"];
+                        const json = XLSX.utils.sheet_to_json(ws);
+                        window.appData.guard = json.map(r => ({
+                            date: String(r['值勤日期'] || ''),
+                            name: r['管理員姓名'] || '',
+                            hours: parseFloat(r['值勤時數']) || 0,
+                            rate: parseFloat(r['時薪津貼']) || 0,
+                            note: r['工作備註'] || ''
+                        }));
+                    }
 
-                    validSheetNames.forEach(sheetName => {
-                        const ws = workbook.Sheets[sheetName];
-                        const json = XLSX.utils.sheet_to_json(ws, { header: 1 });
-
-                        if (sheetName.includes('收入')) {
-                            const newIncome = [];
-                            for (let i = 1; i < json.length; i++) {
-                                const row = json[i];
-                                if (row && row.length > 0) {
-                                    newIncome.push({
-                                        id: row[0] || i,
-                                        floor: String(row[1] || ''),
-                                        name: String(row[2] || ''),
-                                        fee: Number(row[3]) || 0,
-                                        flatPark: Number(row[4]) || 0,
-                                        mechPark: Number(row[5]) || 0,
-                                        paid: Number(row[6]) || 0,
-                                        date: String(row[7] || ''),
-                                        remark: String(row[8] || '')
-                                    });
-                                }
+                    // Read Report Sheet
+                    if (workbook.SheetNames.includes("收支月報表")) {
+                        const ws = workbook.Sheets["收支月報表"];
+                        const json = XLSX.utils.sheet_to_json(ws);
+                        
+                        const filteredReport = [];
+                        json.forEach(r => {
+                            if (r['收支類型'] === '期初現金') {
+                                window.appData.openingCash = parseFloat(r['金額']) || 0;
+                            } else if (r['收支類型'] === '期初帳戶') {
+                                window.appData.openingBank = parseFloat(r['金額']) || 0;
+                            } else {
+                                filteredReport.push({
+                                    date: r['日期'] || '',
+                                    category: r['收支類型'] || '支出',
+                                    type: r['科目類別'] || '公設維護',
+                                    title: r['摘要/說明'] || '',
+                                    amount: parseFloat(r['金額']) || 0,
+                                    method: r['支付方式'] || '現金',
+                                    handler: r['經手人'] || ''
+                                });
                             }
-                            if (newIncome.length > 0) currentMonthData.incomeRows = newIncome;
-                        } else if (sheetName.includes('時數')) {
-                            const newGuard = [];
-                            for (let i = 1; i < json.length; i++) {
-                                const row = json[i];
-                                if (row && row.length > 0) {
-                                    newGuard.push({
-                                        date: String(row[0] || ''),
-                                        xieHours: Number(row[2]) || 0,
-                                        zhouHours: Number(row[3]) || 0,
-                                        offTime: String(row[6] || ''),
-                                        sign: String(row[7] || ''),
-                                        cleaner: String(row[8] || '')
-                                    });
-                                }
-                            }
-                            if (newGuard.length > 0) currentMonthData.guardRows = newGuard;
-                        } else if (sheetName.includes('收支')) {
-                            const newFin = [];
-                            for (let i = 3; i < json.length; i++) {
-                                const row = json[i];
-                                if (row && row.length > 0) {
-                                    newFin.push({
-                                        desc: String(row[0] || ''),
-                                        cashExp: Number(row[1]) || 0,
-                                        accExp: Number(row[2]) || 0,
-                                        cashInc: Number(row[3]) || 0,
-                                        accInc: Number(row[4]) || 0,
-                                        remark: String(row[5] || '')
-                                    });
-                                }
-                            }
-                            if (newFin.length > 0) currentMonthData.financialRows = newFin;
-                        }
-                    });
+                        });
+                        window.appData.report = filteredReport;
+                    }
 
-                    saveMonthDataToFirebase(targetSheetCode, currentMonthData);
-                    renderAllViews();
-                    showToast(`Excel 資料成功比對 ${targetSheetCode} 並更新！`, 'success');
+                    document.getElementById('openingCash').value = window.appData.openingCash;
+                    document.getElementById('openingBank').value = window.appData.openingBank;
 
+                    renderAllTables();
+                    autoSyncData();
+                    showToast('Excel 資料匯入成功！', 'success');
                 } catch (err) {
-                    console.error(err);
-                    showToast("解析 Excel 檔案發生錯誤: " + err.message, 'error');
+                    console.error("Excel import error:", err);
+                    showToast('匯入失敗，請確認檔案格式', 'error');
                 }
             };
-
             reader.readAsArrayBuffer(file);
-            e.target.value = '';
-        });
+        };
 
-        document.getElementById('current-month-select').addEventListener('change', (e) => {
-            currentMonth = e.target.value;
-            const sheetCode = getYYYYMM(currentMonth);
-            document.getElementById('current-sheet-code').innerText = `工作表代碼: ${sheetCode}`;
-            loadMonthData(sheetCode);
-        });
-
-        document.getElementById('btn-force-save').addEventListener('click', () => {
-            saveMonthDataToFirebase(getYYYYMM(currentMonth), currentMonthData);
-        });
-
-        document.querySelectorAll('.nav-tab').forEach(tabBtn => {
-            tabBtn.addEventListener('click', () => {
-                document.querySelectorAll('.nav-tab').forEach(b => {
-                    b.className = "nav-tab px-4 py-2.5 rounded-lg font-extrabold text-sm transition whitespace-nowrap text-sky-900 hover:bg-sky-100";
-                });
-                tabBtn.className = "nav-tab px-4 py-2.5 rounded-lg font-extrabold text-sm transition whitespace-nowrap bg-sky-600 text-white shadow";
-
-                const targetTab = tabBtn.getAttribute('data-tab');
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.classList.add('hidden');
-                });
-                document.getElementById(targetTab).classList.remove('hidden');
-
-                if (targetTab === 'tab-chart1') renderChart1();
-                if (targetTab === 'tab-chart2') renderChart2();
+        // UI Tab Switcher
+        window.switchTab = function(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'text-sky-700', 'shadow-md');
+                btn.classList.add('text-white', 'hover:bg-white/10');
             });
-        });
 
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            const errBox = document.getElementById('login-error');
-            const submitBtn = document.getElementById('btn-login-submit');
+            document.getElementById(`${tabId}-content`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            activeBtn.classList.add('bg-white', 'text-sky-700', 'shadow-md');
+            activeBtn.classList.remove('text-white', 'hover:bg-white/10');
 
-            errBox.classList.add('hidden');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> 驗證登入中...`;
-
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (err) {
-                console.error("Login Fail:", err);
-                errBox.innerText = "登入失敗: 電子郵件或密碼不正確 (" + err.message + ")";
-                errBox.classList.remove('hidden');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> 安全登入系統`;
+            if(tabId === 'tab4') {
+                updateSummaryAndCharts();
             }
-        });
+        };
 
-        document.getElementById('btn-logout').addEventListener('click', async () => {
-            if (confirm("確定要登出系統嗎？")) {
-                await signOut(auth);
-                showToast("已成功登出系統");
-            }
-        });
+        // Custom Toast System
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bgClass = 'bg-sky-600';
+            let icon = 'fa-circle-info';
+            if (type === 'success') { bgClass = 'bg-emerald-600'; icon = 'fa-circle-check'; }
+            if (type === 'warning') { bgClass = 'bg-amber-500'; icon = 'fa-triangle-exclamation'; }
+            if (type === 'error') { bgClass = 'bg-rose-600'; icon = 'fa-circle-xmark'; }
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user;
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('app-dashboard').classList.remove('hidden');
-                document.getElementById('user-email-display').innerText = user.email;
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-xl shadow-xl flex items-center space-x-3 pointer-events-auto transition-all duration-300 transform translate-y-2 opacity-0 text-xs font-bold`;
+            toast.innerHTML = `<i class="fa-solid ${icon} text-lg"></i><span>${msg}</span>`;
 
-                initFirebaseListeners();
-                loadMonthData(getYYYYMM(currentMonth));
-            } else {
-                currentUser = null;
-                document.getElementById('login-screen').classList.remove('hidden');
-                document.getElementById('app-dashboard').classList.add('hidden');
-            }
-        });
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 50);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
     </script>
 </body>
 </html>
